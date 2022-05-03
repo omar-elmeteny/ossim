@@ -18,5 +18,8 @@ public class SemSignal implements Command{
         
     }
 
-
+    @Override
+    public String toString() {
+        return "semSignal " + resource;
+    }
 }

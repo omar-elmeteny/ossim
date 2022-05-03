@@ -24,4 +24,9 @@ public class Increment implements Command{
         }
         process.writeVariable(variableName, Integer.toString(++intValue));
     }
+
+    @Override
+    public String toString() {
+        return "increment " + variableName;
+    }
 }

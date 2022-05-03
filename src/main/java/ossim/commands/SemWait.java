@@ -18,5 +18,8 @@ public class SemWait implements Command{
         
     }
     
-
+    @Override
+    public String toString() {
+        return "semWait " + resource;
+    }
 }

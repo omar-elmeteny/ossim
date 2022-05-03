@@ -14,13 +14,20 @@ public class UserModeProcess {
     final private ArrayList<Command> commands;
     private ProcessState state;
     private Hashtable<String, String> variables;
+    final private String programPath;
 
     public UserModeProcess(int processID, String programPath) throws SimulatorSyntaxException, IOException {
         super();
         this.processID = processID;
+        this.programPath = programPath;
         commands = Parser.parseFile(programPath);
         setState(ProcessState.NEW);
         variables = new Hashtable<>();
+        Display.printProcess(this);
+    }
+
+    public String getProgramPath() {
+        return programPath;
     }
 
     public ProcessState getState() {

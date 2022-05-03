@@ -33,4 +33,9 @@ public class JumpIfGreaterThan implements Command{
             process.setProgramCounter(process.getProgramCounter() + positionOffset);
         }
     }
+
+    @Override
+    public String toString() {
+        return "jgt " + leftVariableName + " " + rightVariableName + " " + positionOffset; 
+    }
 }

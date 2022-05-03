@@ -19,4 +19,9 @@ public class Assign implements Command{
         String value = process.readVariable(fromVariableName);
         process.writeVariable(toVariableName, value);
     }
+
+    @Override
+    public String toString() {
+        return "assign " + toVariableName + " " + fromVariableName;
+    }
 }

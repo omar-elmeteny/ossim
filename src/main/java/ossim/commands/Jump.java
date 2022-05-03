@@ -11,9 +11,14 @@ public class Jump implements Command{
         super();
         this.positionOffset = positionOffset;
     }
+
     @Override
     public void execute(UserModeProcess process) throws SimulatorRuntimeException {
         process.setProgramCounter(process.getProgramCounter() + positionOffset);
     }
     
+    @Override
+    public String toString() {
+        return "jump " + positionOffset;    
+    }
 }
