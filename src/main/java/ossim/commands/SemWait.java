@@ -13,7 +13,7 @@ public class SemWait implements Command{
     }
 
     @Override
-    public void execute(UserModeProcess proccess) throws SimulatorRuntimeException {
+    public void execute(UserModeProcess process) throws SimulatorRuntimeException {
         // TODO Auto-generated method stub
         
     }

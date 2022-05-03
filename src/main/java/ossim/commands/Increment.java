@@ -5,16 +5,23 @@ import ossim.simulator.UserModeProcess;
 
 public class Increment implements Command{
     
-    private String variable;
+    private String variableName;
 
-    public Increment(String variable) {
+    public Increment(String variableName) {
         super();
-        this.variable = variable;
+        this.variableName = variableName;
     }
 
     @Override
-    public void execute(UserModeProcess proccess) throws SimulatorRuntimeException {
-        // TODO Auto-generated method stub
-        
+    public void execute(UserModeProcess process) throws SimulatorRuntimeException {
+        String value = process.readVariable(variableName);
+        int intValue;
+        try{
+            intValue = Integer.parseInt(value);    
+        }
+        catch(NumberFormatException e){
+            throw new SimulatorRuntimeException(e.getMessage());
+        }
+        process.writeVariable(variableName, Integer.toString(++intValue));
     }
 }

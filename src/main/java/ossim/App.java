@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import ossim.commands.Command;
+import ossim.exceptions.SimulatorRuntimeException;
 import ossim.exceptions.SimulatorSyntaxException;
 import ossim.simulator.Parser;
+import ossim.simulator.UserModeProcess;
 
 /**
  * Hello world!
@@ -13,10 +15,12 @@ import ossim.simulator.Parser;
  */
 public class App 
 {
-    public static void main( String[] args ) throws IOException, SimulatorSyntaxException 
+    public static void main( String[] args ) throws IOException, SimulatorSyntaxException, SimulatorRuntimeException 
     {
-        ArrayList<Command> program1 = Parser.parseFile("programs\\Program_1.txt");
-        ArrayList<Command> program2 = Parser.parseFile("programs\\Program_2.txt");
-        ArrayList<Command> program3 = Parser.parseFile("programs\\Program_3.txt");
+        UserModeProcess process1 = new UserModeProcess(1, "programs\\Program_1.txt");
+        Command cmd;
+        while((cmd = process1.getNextCommand()) != null){
+            cmd.execute(process1);
+        }
     }
 }

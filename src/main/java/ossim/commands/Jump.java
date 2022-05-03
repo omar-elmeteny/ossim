@@ -12,9 +12,8 @@ public class Jump implements Command{
         this.positionOffset = positionOffset;
     }
     @Override
-    public void execute(UserModeProcess proccess) throws SimulatorRuntimeException {
-        // TODO Auto-generated method stub
-        
+    public void execute(UserModeProcess process) throws SimulatorRuntimeException {
+        process.setProgramCounter(process.getProgramCounter() + positionOffset);
     }
     
 }

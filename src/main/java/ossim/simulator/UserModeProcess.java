@@ -56,4 +56,11 @@ public class UserModeProcess {
             throw new SimulatorRuntimeException("Variable " + variableName + " is not found");
         return variables.get(variableName);
     }
+
+    public Command getNextCommand(){
+        if(programCounter >= commands.size()){
+            return null;
+        }
+        return commands.get(programCounter++);
+    }
 }

@@ -5,5 +5,5 @@ import ossim.simulator.UserModeProcess;
 
 public interface Command {
     
-    void execute(UserModeProcess proccess) throws SimulatorRuntimeException;
+    void execute(UserModeProcess process) throws SimulatorRuntimeException;
 }

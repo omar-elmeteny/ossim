@@ -5,17 +5,16 @@ import ossim.simulator.UserModeProcess;
 
 public class Print implements Command{
 
-    private String variable;
+    private String variableName;
 
-    public Print(String variable) {
+    public Print(String variableName) {
         super();
-        this.variable = variable;
+        this.variableName = variableName;
     }
 
     @Override
-    public void execute(UserModeProcess proccess) throws SimulatorRuntimeException {
-        // TODO Auto-generated method stub
-        
+    public void execute(UserModeProcess process) throws SimulatorRuntimeException {
+        System.out.println(process.readVariable(variableName));
     }
     
 }

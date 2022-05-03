@@ -5,18 +5,18 @@ import ossim.simulator.UserModeProcess;
 
 public class Assign implements Command{
     
-    private String toVariable;
-    private String fromVariable;
+    private String toVariableName;
+    private String fromVariableName;
 
     public Assign(String toVariable, String fromVariable) {
         super();
-        this.toVariable = toVariable;
-        this.fromVariable = fromVariable;
+        this.toVariableName = toVariable;
+        this.fromVariableName = fromVariable;
     }
 
     @Override
-    public void execute(UserModeProcess proccess) throws SimulatorRuntimeException {
-        // TODO Auto-generated method stub
-        
+    public void execute(UserModeProcess process) throws SimulatorRuntimeException {
+        String value = process.readVariable(fromVariableName);
+        process.writeVariable(toVariableName, value);
     }
 }
