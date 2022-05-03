@@ -1,9 +1,9 @@
 package ossim.commands;
 
 import ossim.exceptions.SimulatorRuntimeException;
-import ossim.simulator.UserModeProccess;
+import ossim.simulator.UserModeProcess;
 
 public interface Command {
     
-    void execute(UserModeProccess proccess) throws SimulatorRuntimeException;
+    void execute(UserModeProcess proccess) throws SimulatorRuntimeException;
 }
