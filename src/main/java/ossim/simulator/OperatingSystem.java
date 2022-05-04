@@ -33,14 +33,19 @@ public class OperatingSystem {
         UserModeProcess process = scheduler.schedule();
         if(process != null){
             Command cmd = process.getNextCommand();
+            if(cmd == null){
+                scheduler.finishRunningProcess();
+                return;
+            }
+            Display.printExecutingInstruction(process, cmd);
             try {
-                Display.printExecutingInstruction(process, cmd);
                 cmd.execute(process);
-                if(!process.hasCommands()){
-                    scheduler.finishRunningProcess();
-                }
             } catch (SimulatorRuntimeException e) {
                 Display.displayProcessErrorMessage(process, e.getMessage());
+                scheduler.finishRunningProcess();
+                return;
+            }
+            if(!process.hasCommands()){
                 scheduler.finishRunningProcess();
             }
         }
@@ -67,8 +72,8 @@ public class OperatingSystem {
         return scheduler.getRunningProcess() != null || !scheduler.getReadyQueue().isEmpty() || !scheduler.getBlockedProcesses().isEmpty();
     }
 
-    public static void launchArrivingPrograms(){
-        ArrayList<String> programs = arrivingPrograms.get(currentTime);
+    private static void launchArrivingPrograms(){
+        ArrayList<String> programs = arrivingPrograms.remove(currentTime); 
         if(programs == null)
             return;
         for(String programPath : programs){
@@ -79,7 +84,6 @@ public class OperatingSystem {
             } catch (IOException e) {
                 Display.printLaunchError(programPath,e.getMessage());
             }
-        } 
-        arrivingPrograms.remove(currentTime);   
+        }   
     }
 }

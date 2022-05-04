@@ -30,9 +30,9 @@ public class Display {
 
     public static void printQueues(Scheduler scheduler){
         if(scheduler.getRunningProcess() != null){
-            System.out.print(ANSI_RED + "Running Process: " + ANSI_BLUE + "PID: " + ANSI_RESET + scheduler.getRunningProcess().getProcessID() + " ");
+            System.out.print(ANSI_GREEN + "Running Process: " + ANSI_BLUE + "PID: " + ANSI_RESET + scheduler.getRunningProcess().getProcessID() + " ");
         }
-        System.out.print(ANSI_RED + "Ready Queue: " + ANSI_RESET);
+        System.out.print(ANSI_GREEN + "Ready Queue: " + ANSI_RESET);
         boolean flag = false;
         for(UserModeProcess process : scheduler.getReadyQueue()){
             if(flag)
@@ -42,7 +42,7 @@ public class Display {
             System.out.print(ANSI_BLUE + "PID: " + ANSI_RESET + process.getProcessID());
         }
         System.out.print(" ");
-        System.out.print(ANSI_RED + "Blocked Queue: " + ANSI_RESET);
+        System.out.print(ANSI_GREEN + "Blocked Queue: " + ANSI_RESET);
         flag = false;
         for(UserModeProcess process : scheduler.getBlockedProcesses()){
             if(flag)
@@ -52,7 +52,7 @@ public class Display {
             System.out.print(ANSI_BLUE + "PID: " + ANSI_RESET + process.getProcessID());
         }
         System.out.print(" ");
-        System.out.print(ANSI_RED + "Finished Queue: " + ANSI_RESET);
+        System.out.print(ANSI_GREEN + "Finished Queue: " + ANSI_RESET);
         flag = false;
         for(UserModeProcess process : scheduler.getFinishedProcesses()){
             if(flag)
@@ -65,11 +65,11 @@ public class Display {
     }
 
     public static void displayProcessErrorMessage(UserModeProcess process, String errorMessage){
-        System.out.println(ANSI_RED + "Error in Process: " + ANSI_BLUE + "PID: " + ANSI_RESET + process.getProcessID() + ANSI_RED + errorMessage + ANSI_RESET);
+        System.out.println(ANSI_RED + "Error in Process: " + ANSI_BLUE + "PID: " + ANSI_RESET + process.getProcessID() + " " + ANSI_RED + errorMessage + ANSI_RESET);
     }
 
     public static void printLaunchError(String programPath, String errorMessage) {
-        System.out.println(ANSI_RED + "Failed to launch program: " + ANSI_BLUE + "path " + ANSI_RESET + programPath + ANSI_RED + errorMessage + ANSI_RESET);
+        System.out.println(ANSI_RED + "Failed to launch program: " + ANSI_BLUE + "path " + ANSI_RESET + programPath + " " + ANSI_RED + errorMessage + ANSI_RESET);
     }
 
     public static void printProcessState(UserModeProcess process, ProcessState oldProcessState){

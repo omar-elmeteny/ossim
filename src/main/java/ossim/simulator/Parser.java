@@ -11,6 +11,10 @@ import ossim.exceptions.SimulatorSyntaxException;
 
 public class Parser {
 
+    // special variable name used for the printFromTo command as the loop counter
+    private final static String counterVariableName = "counter";
+
+    // parsing every line in the program into commands to be interpreted by the OperatingSystem class 
     public static ArrayList<Command> parseFile(String pathname) throws IOException, SimulatorSyntaxException{
         ArrayList<String> lines = readFile(pathname);
         ArrayList<Command> commands = new ArrayList<>();
@@ -20,6 +24,7 @@ public class Parser {
         return commands;
     }
     
+    // reading the text file into an array of lines
     private static ArrayList<String> readFile(String pathname) throws IOException {
         File file = new File(pathname);
         BufferedReader br = new BufferedReader(new FileReader(file));
@@ -35,8 +40,9 @@ public class Parser {
         }
     }
 
+    // using factory method design pattern to create commands
     private static ArrayList<Command> parseLine(String line) throws SimulatorSyntaxException {
-        int index = line.indexOf("#");
+        int index = line.indexOf("#"); // handling code comments
         if(index >= 0){
             line = line.substring(0,index);
         }
@@ -74,14 +80,18 @@ public class Parser {
                 if (args.length != 3) {
                     throw new SimulatorSyntaxException("Command " + args[0] + " has wrong number of arguments");
                 }
-                commands.add(new Assign("counter", args[1]));
-                commands.add(new JumpIfGreaterThan("counter", args[2], 3));
-                commands.add(new Print("counter"));
-                commands.add(new Increment("counter"));
+                /* The printFromTo command is broken to five smaller commands 
+                Reason: because the printFromTo method may print many number so it doesn't sense to run in a single cycle like other commands*/
+                commands.add(new Assign(counterVariableName, args[1]));
+                commands.add(new JumpIfGreaterThan(counterVariableName, args[2], 3));
+                commands.add(new Print(counterVariableName));
+                commands.add(new Increment(counterVariableName));
                 commands.add(new Jump(-4));
                 break;
             case "assign":
+                // This case handles 3 types of assign command
                 if (args.length == 4) {
+                    // assign a readFile b
                     if (!args[2].equals("readFile"))
                         throw new SimulatorSyntaxException(
                                 "When assign command has 3 arguments, the second must be readFile command");
@@ -90,8 +100,10 @@ public class Parser {
                     throw new SimulatorSyntaxException("Command " + args[0] + " has wrong number of arguments");
                 } else {
                     if (args[2].equals("input"))
+                        // assign a input
                         commands.add(new Input(args[1]));
                     else
+                        // assign a b
                         commands.add(new Assign(args[1], args[2]));
                 }
                 break;

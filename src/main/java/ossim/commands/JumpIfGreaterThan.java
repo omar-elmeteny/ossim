@@ -9,10 +9,10 @@ public class JumpIfGreaterThan implements Command{
     private String rightVariableName;
     private int positionOffset;
 
-    public JumpIfGreaterThan(String left, String right, int positionOffset) {
+    public JumpIfGreaterThan(String leftVariableName, String rightVariableName, int positionOffset) {
         super();
-        this.leftVariableName = left;
-        this.rightVariableName = right;
+        this.leftVariableName = leftVariableName;
+        this.rightVariableName = rightVariableName;
         this.positionOffset = positionOffset;
     }
 
@@ -27,7 +27,7 @@ public class JumpIfGreaterThan implements Command{
             rigthIntValue = Integer.parseInt(rightValue);    
         }
         catch(NumberFormatException e){
-            throw new SimulatorRuntimeException(e.getMessage());
+            throw new SimulatorRuntimeException("Failed to parse integer " + e.getMessage());
         }
         if(leftIntValue > rigthIntValue){
             process.setProgramCounter(process.getProgramCounter() + positionOffset);

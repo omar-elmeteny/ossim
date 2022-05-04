@@ -20,7 +20,7 @@ public class Increment implements Command{
             intValue = Integer.parseInt(value);    
         }
         catch(NumberFormatException e){
-            throw new SimulatorRuntimeException(e.getMessage());
+            throw new SimulatorRuntimeException("Failed to parse integer " + e.getMessage());
         }
         process.writeVariable(variableName, Integer.toString(++intValue));
     }
