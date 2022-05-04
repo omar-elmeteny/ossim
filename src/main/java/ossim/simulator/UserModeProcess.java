@@ -35,7 +35,9 @@ public class UserModeProcess {
     }
 
     public void setState(ProcessState state) {
+        ProcessState oldProcessState = this.state;
         this.state = state;
+        Display.printProcessState(this, oldProcessState);
     }
 
     public ArrayList<Command> getCommands() {
@@ -69,5 +71,9 @@ public class UserModeProcess {
             return null;
         }
         return commands.get(programCounter++);
+    }
+
+    public boolean hasCommands(){
+        return programCounter < commands.size(); 
     }
 }
