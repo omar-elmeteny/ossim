@@ -46,7 +46,7 @@ public class Scheduler {
     public void addNewProcess(UserModeProcess process){
         process.setState(ProcessState.READY);
         readyQueue.add(process);
-        Display.printQueues(this);
+        DisplayWindow.printQueues(this);
     }
 
     // Waiting for event
@@ -54,7 +54,7 @@ public class Scheduler {
         runningProcess.setState(ProcessState.BLOCKED);
         blockedProcesses.add(runningProcess);
         runningProcess = null;
-        Display.printQueues(this);
+        DisplayWindow.printQueues(this);
     }
 
     // Event occurs
@@ -62,7 +62,7 @@ public class Scheduler {
         blockedProcesses.remove(process);
         readyQueue.add(process);
         process.setState(ProcessState.READY);
-        Display.printQueues(this);
+        DisplayWindow.printQueues(this);
     }
 
     // Normal Completion or Termination due to a runtime error
@@ -70,7 +70,7 @@ public class Scheduler {
         runningProcess.setState(ProcessState.FINISHED);
         finishedProcesses.add(runningProcess);
         runningProcess = null;
-        Display.printQueues(this);
+        DisplayWindow.printQueues(this);
     }
 
     // Choose process to be executed
@@ -99,7 +99,7 @@ public class Scheduler {
             runningProcess = readyQueue.remove();
             commandsInCurrentSlice = 0;
             runningProcess.setState(ProcessState.RUNNING);
-            Display.printQueues(this);
+            DisplayWindow.printQueues(this);
         }    
         return runningProcess;
     }
@@ -109,7 +109,7 @@ public class Scheduler {
         runningProcess.setState(ProcessState.READY);
         readyQueue.add(runningProcess);
         runningProcess = null;
-        Display.printQueues(this);
+        DisplayWindow.printQueues(this);
     }
 
 }

@@ -37,11 +37,11 @@ public class OperatingSystem {
                 scheduler.finishRunningProcess();
                 return;
             }
-            Display.printExecutingInstruction(process, cmd);
+            DisplayWindow.printExecutingInstruction(process, cmd);
             try {
                 cmd.execute(process);
             } catch (SimulatorRuntimeException e) {
-                Display.displayProcessErrorMessage(process, e.getMessage());
+                DisplayWindow.displayProcessErrorMessage(process, e.getMessage());
                 scheduler.finishRunningProcess();
                 return;
             }
@@ -80,9 +80,9 @@ public class OperatingSystem {
             try {
                 launchProgram(programPath);
             } catch (SimulatorSyntaxException e) {
-                Display.printLaunchError(programPath,e.getMessage());
+                DisplayWindow.printLaunchError(programPath,e.getMessage());
             } catch (IOException e) {
-                Display.printLaunchError(programPath,e.getMessage());
+                DisplayWindow.printLaunchError(programPath,e.getMessage());
             }
         }   
     }

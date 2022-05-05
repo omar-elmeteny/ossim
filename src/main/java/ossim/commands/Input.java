@@ -3,7 +3,7 @@ package ossim.commands;
 import java.util.Scanner;
 
 import ossim.exceptions.SimulatorRuntimeException;
-import ossim.simulator.Display;
+import ossim.simulator.DisplayWindow;
 import ossim.simulator.UserModeProcess;
 
 public class Input implements Command{
@@ -15,12 +15,9 @@ public class Input implements Command{
         this.variableName = variableName;
     }
 
-    @SuppressWarnings("resource")
     @Override
     public void execute(UserModeProcess process) throws SimulatorRuntimeException {
-        Display.printAskingForInput(process);
-        Scanner sc = new Scanner(System.in);
-        String nextLine = sc.nextLine();
+        String nextLine = DisplayWindow.askForInput(process);
         process.writeVariable(variableName, nextLine);        
     }
     

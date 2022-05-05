@@ -26,7 +26,7 @@ public class UserModeProcess {
         commands = Parser.parseFile(programPath);
         state = ProcessState.NEW;
         variables = new Hashtable<>();
-        Display.printProcess(this);
+        DisplayWindow.printProcess(this);
     }
 
     public String getProgramPath() {
@@ -40,7 +40,7 @@ public class UserModeProcess {
     public void setState(ProcessState state) {
         ProcessState oldProcessState = this.state;
         this.state = state;
-        Display.printProcessState(this, oldProcessState);
+        DisplayWindow.printProcessState(this, oldProcessState);
     }
 
     public ArrayList<Command> getCommands() {
