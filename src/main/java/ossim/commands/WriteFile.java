@@ -1,6 +1,7 @@
 package ossim.commands;
 
 import ossim.exceptions.SimulatorRuntimeException;
+import ossim.simulator.OperatingSystem;
 import ossim.simulator.UserModeProcess;
 
 public class WriteFile implements Command{
@@ -16,8 +17,7 @@ public class WriteFile implements Command{
 
     @Override
     public void execute(UserModeProcess process) throws SimulatorRuntimeException {
-        // TODO Auto-generated method stub
-        
+        OperatingSystem.writeFile(process.readVariable(fileNameVariable), process.readVariable(dataVariable));
     }
 
     @Override

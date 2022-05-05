@@ -22,19 +22,19 @@ public class Scheduler {
         finishedProcesses = new ArrayList<>();
     }
 
-    public UserModeProcess getRunningProcess() {
+    public synchronized UserModeProcess getRunningProcess() {
         return runningProcess;
     }
 
-    public ArrayList<UserModeProcess> getFinishedProcesses() {
+    public synchronized ArrayList<UserModeProcess> getFinishedProcesses() {
         return finishedProcesses;
     }
 
-    public ArrayList<UserModeProcess> getBlockedProcesses() {
+    public synchronized ArrayList<UserModeProcess> getBlockedProcesses() {
         return blockedProcesses;
     }
 
-    public Queue<UserModeProcess> getReadyQueue() {
+    public synchronized Queue<UserModeProcess> getReadyQueue() {
         return readyQueue;
     }
 
@@ -50,7 +50,7 @@ public class Scheduler {
     }
 
     // Waiting for event
-    public void blockRunningProcess(){
+    public synchronized void blockRunningProcess(){
         runningProcess.setState(ProcessState.BLOCKED);
         blockedProcesses.add(runningProcess);
         runningProcess = null;
@@ -58,7 +58,7 @@ public class Scheduler {
     }
 
     // Event occurs
-    public void wakeUpProcess(UserModeProcess process){
+    public synchronized void wakeUpProcess(UserModeProcess process){
         blockedProcesses.remove(process);
         readyQueue.add(process);
         process.setState(ProcessState.READY);
@@ -66,15 +66,23 @@ public class Scheduler {
     }
 
     // Normal Completion or Termination due to a runtime error
-    public void finishRunningProcess(){
+    public synchronized void finishRunningProcess(){
         runningProcess.setState(ProcessState.FINISHED);
         finishedProcesses.add(runningProcess);
         runningProcess = null;
         DisplayWindow.printQueues(this);
     }
 
+    // Termination due to a system call error
+    public synchronized void terminateBlockedProcess(UserModeProcess process){
+        blockedProcesses.remove(process);
+        process.setState(ProcessState.FINISHED);
+        finishedProcesses.add(process);
+        DisplayWindow.printQueues(this);
+    }
+
     // Choose process to be executed
-    public UserModeProcess schedule(){
+    public synchronized UserModeProcess schedule(){
         // Determine whether to preempt the current running process or keep it running 
         if(runningProcess != null){
             commandsInCurrentSlice++;
@@ -105,11 +113,16 @@ public class Scheduler {
     }
 
     // Preemption
-    public void preemptRunningProcess(){
+    public synchronized void preemptRunningProcess(){
         runningProcess.setState(ProcessState.READY);
         readyQueue.add(runningProcess);
         runningProcess = null;
         DisplayWindow.printQueues(this);
+    }
+
+    public synchronized boolean hasRunningPrograms() {
+        return getRunningProcess() != null || !getReadyQueue().isEmpty()
+                || !getBlockedProcesses().isEmpty();
     }
 
 }

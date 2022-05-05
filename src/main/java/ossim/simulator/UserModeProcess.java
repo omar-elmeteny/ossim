@@ -37,7 +37,7 @@ public class UserModeProcess {
         return state;
     }
 
-    public void setState(ProcessState state) {
+    public synchronized void setState(ProcessState state) {
         ProcessState oldProcessState = this.state;
         this.state = state;
         DisplayWindow.printProcessState(this, oldProcessState);
@@ -60,12 +60,12 @@ public class UserModeProcess {
     }
 
     // Writes the value in hashtable
-    public void writeVariable(String variableName, String value) {
+    public synchronized void writeVariable(String variableName, String value) {
         variables.put(variableName, value);
     }
 
     // Reads the value from the hashtable and fails if the variable name is not existing
-    public String readVariable(String variableName) throws SimulatorRuntimeException {
+    public synchronized String readVariable(String variableName) throws SimulatorRuntimeException {
         if (!variables.containsKey(variableName))
             throw new SimulatorRuntimeException("Variable " + variableName + " is not found");
         return variables.get(variableName);

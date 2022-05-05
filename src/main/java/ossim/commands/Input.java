@@ -1,9 +1,8 @@
 package ossim.commands;
 
-import java.util.Scanner;
 
 import ossim.exceptions.SimulatorRuntimeException;
-import ossim.simulator.DisplayWindow;
+import ossim.simulator.OperatingSystem;
 import ossim.simulator.UserModeProcess;
 
 public class Input implements Command{
@@ -16,9 +15,8 @@ public class Input implements Command{
     }
 
     @Override
-    public void execute(UserModeProcess process) throws SimulatorRuntimeException {
-        String nextLine = DisplayWindow.askForInput(process);
-        process.writeVariable(variableName, nextLine);        
+    public void execute(UserModeProcess process) throws SimulatorRuntimeException { 
+        OperatingSystem.input(variableName);     
     }
     
     @Override

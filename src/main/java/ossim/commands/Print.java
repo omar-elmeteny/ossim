@@ -1,7 +1,7 @@
 package ossim.commands;
 
 import ossim.exceptions.SimulatorRuntimeException;
-import ossim.simulator.DisplayWindow;
+import ossim.simulator.OperatingSystem;
 import ossim.simulator.UserModeProcess;
 
 public class Print implements Command{
@@ -15,7 +15,7 @@ public class Print implements Command{
 
     @Override
     public void execute(UserModeProcess process) throws SimulatorRuntimeException {
-        DisplayWindow.printProcessOutput(process, process.readVariable(variableName));
+        OperatingSystem.print(process.readVariable(variableName));
     }
 
     @Override

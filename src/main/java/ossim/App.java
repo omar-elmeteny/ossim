@@ -13,8 +13,9 @@ public class App
 {
     public static void main( String[] args ) throws IOException, SimulatorSyntaxException, SimulatorRuntimeException 
     {
-        OperatingSystem.addArrivingProgram(0, "programs/Program_1.txt");
-        OperatingSystem.addArrivingProgram(0, "programs/Program_1.txt");
+        // OperatingSystem.addArrivingProgram(0, "programs/Program_1.txt");
+        // OperatingSystem.addArrivingProgram(0, "programs/Program_1.txt");
+        OperatingSystem.addArrivingProgram(0, "programs/Program_2.txt");
         OperatingSystem.run();
     }
 }

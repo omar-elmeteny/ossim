@@ -57,14 +57,14 @@ public class DisplayWindow extends JFrame{
         });
     }
 
-    public static DisplayWindow getMainWindow(){
+    public static synchronized DisplayWindow getMainWindow(){
         if(mainWindow == null){
             mainWindow = new DisplayWindow();
         }
         return mainWindow;
     }
 
-    public static void printExecutingInstruction(UserModeProcess process, Command cmd){
+    public static synchronized void printExecutingInstruction(UserModeProcess process, Command cmd){
         addText("PID: ", blue);
         addText(process.getProcessID() + " ,", "white");
         addText(" CMD: ", blue);
@@ -80,14 +80,14 @@ public class DisplayWindow extends JFrame{
     }
 
 
-    public static void printProcessOutput(UserModeProcess process, String output){
+    public static synchronized void printProcessOutput(UserModeProcess process, String output){
         addText("Output from PID ", "#d287a5");
         addText(process.getProcessID() + ": ", "white");
         addText(output ,"white");
         addNewLine();
     }
 
-    public static void printProcess(UserModeProcess process){
+    public static synchronized void printProcess(UserModeProcess process){
         addText("Process created with PID ", blue);
         addText(process.getProcessID() + " ", "white");
         addText("from ", blue);
@@ -95,7 +95,7 @@ public class DisplayWindow extends JFrame{
         addNewLine();
     }
 
-    public static void printQueues(Scheduler scheduler){
+    public static synchronized void printQueues(Scheduler scheduler){
         if(scheduler.getRunningProcess() != null){
             addText("Running Process: ", "green");
             addText("PID: ", blue);
@@ -134,7 +134,7 @@ public class DisplayWindow extends JFrame{
         addNewLine();
     }
 
-    public static void displayProcessErrorMessage(UserModeProcess process, String errorMessage){
+    public static synchronized void displayProcessErrorMessage(UserModeProcess process, String errorMessage){
         addText("Error in Process ", "red");
         addText("PID ", blue);
         addText(process.getProcessID() + " ", "white");
@@ -142,7 +142,7 @@ public class DisplayWindow extends JFrame{
         addNewLine();
     }
 
-    public static void printLaunchError(String programPath, String errorMessage) {
+    public static synchronized void printLaunchError(String programPath, String errorMessage) {
         addText("Failed to launch program: ", "red");
         addText("path ", blue);
         addText(programPath + " ", "white");
@@ -150,7 +150,7 @@ public class DisplayWindow extends JFrame{
         addNewLine();
     }
 
-    public static void printProcessState(UserModeProcess process, ProcessState oldProcessState){
+    public static synchronized void printProcessState(UserModeProcess process, ProcessState oldProcessState){
         addText("State Change ", "yellow");
         addText("PID: ", blue);
         addText(Integer.toString(process.getProcessID()) + " ","white");
@@ -161,7 +161,7 @@ public class DisplayWindow extends JFrame{
     }
 
 
-    private static void addText(String text, String color){
+    private static synchronized void addText(String text, String color){
         outputText.append("<span style='font-family: monospace;font-size: 18px;font-weigth: bold;color: ");
         outputText.append(color);
         outputText.append("'>");
@@ -169,7 +169,7 @@ public class DisplayWindow extends JFrame{
         outputText.append("</span>");     
     }
 
-    private static void addNewLine(){
+    private static synchronized void addNewLine(){
         getMainWindow().addHTML(outputText.toString());
         outputText.delete(0, outputText.length() - 1);
     }
