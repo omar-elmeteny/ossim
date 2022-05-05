@@ -1,6 +1,7 @@
 package ossim.commands;
 
 import ossim.exceptions.SimulatorRuntimeException;
+import ossim.simulator.OperatingSystem;
 import ossim.simulator.UserModeProcess;
 
 public class SemWait implements Command{
@@ -14,8 +15,7 @@ public class SemWait implements Command{
 
     @Override
     public void execute(UserModeProcess process) throws SimulatorRuntimeException {
-        // TODO Auto-generated method stub
-        
+        OperatingSystem.semWait(resource);
     }
     
     @Override

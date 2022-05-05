@@ -18,10 +18,8 @@ public class OperatingSystem {
     static final private Scheduler scheduler = new Scheduler();
     static private int nextProcessID = 1;
     static private int currentTime = 0;
-    static final private Object outputSync = new Object();
-    static final private Object fileSync = new Object();
     static final private Hashtable<Integer, ArrayList<String>> arrivingPrograms = new Hashtable<>();
-    static final private Object inputSync = new Object();
+    static final private Hashtable<String,Mutex> mutexes = new Hashtable<>();
 
     private OperatingSystem() {
         super();
@@ -42,7 +40,7 @@ public class OperatingSystem {
         if (process != null) {
             Command cmd = process.getNextCommand();
             if (cmd == null) {
-                scheduler.finishRunningProcess();
+                finishRunningProcess();
                 return;
             }
             DisplayWindow.printExecutingInstruction(process, cmd);
@@ -50,13 +48,18 @@ public class OperatingSystem {
                 cmd.execute(process);
             } catch (SimulatorRuntimeException e) {
                 DisplayWindow.displayProcessErrorMessage(process, e.getMessage());
-                scheduler.finishRunningProcess();
+                finishRunningProcess();
                 return;
             }
             if (!process.hasCommands()) {
-                scheduler.finishRunningProcess();
+                finishRunningProcess();
             }
         }
+    }
+
+    private static void finishRunningProcess() {
+        releaseOwnedResources(scheduler.getRunningProcess());
+        scheduler.finishRunningProcess();
     }
 
     public static void addArrivingProgram(int time, String programPath) {
@@ -95,11 +98,9 @@ public class OperatingSystem {
         UserModeProcess process = scheduler.getRunningProcess();
         scheduler.blockRunningProcess();
         Thread thread = new Thread(() -> {
-            synchronized(inputSync){
-                String text = DisplayWindow.askForInput(process);
-                process.writeVariable(variableName, text);
-                scheduler.wakeUpProcess(process);
-            }
+            String text = DisplayWindow.askForInput(process);
+            process.writeVariable(variableName, text);
+            scheduler.wakeUpProcess(process);
         });
         thread.start();
     }
@@ -108,10 +109,8 @@ public class OperatingSystem {
         UserModeProcess process = scheduler.getRunningProcess();
         scheduler.blockRunningProcess();
         Thread thread = new Thread(() -> {
-            synchronized(outputSync){
-                DisplayWindow.printProcessOutput(process, text);
-                scheduler.wakeUpProcess(process);
-            }
+            DisplayWindow.printProcessOutput(process, text);
+            scheduler.wakeUpProcess(process);
         });
         thread.start();
     }
@@ -120,48 +119,83 @@ public class OperatingSystem {
         UserModeProcess process = scheduler.getRunningProcess();
         scheduler.blockRunningProcess();
         Thread thread = new Thread(() -> {
-            synchronized(fileSync){
-                File file = new File(fileName);
-                try{
-                    BufferedReader br = new BufferedReader(new FileReader(file));
-                    try {
-                        String st;
-                        String result = "";
-                        while ((st = br.readLine()) != null) {
-                            result += st;
-                        }
-                        process.writeVariable(outputVariableName, result);
-                    } finally {
-                        br.close();
+            File file = new File(fileName);
+            try{
+                BufferedReader br = new BufferedReader(new FileReader(file));
+                try {
+                    String st;
+                    String result = "";
+                    while ((st = br.readLine()) != null) {
+                        result += st;
                     }
-                }catch(IOException e) {
-                    DisplayWindow.displayProcessErrorMessage(process, "readFile system call failed: " + e.getMessage());
-                    scheduler.terminateBlockedProcess(process);
-                } 
-            }
+                    process.writeVariable(outputVariableName, result);
+                } finally {
+                    br.close();
+                }
+            }catch(IOException e) {
+                DisplayWindow.displayProcessErrorMessage(process, "readFile system call failed: " + e.getMessage());
+                terminateBlockedProcess(process);
+            } 
         });
         thread.start();
+    }
+
+    private static void terminateBlockedProcess(UserModeProcess process) {
+        releaseOwnedResources(process);
+        scheduler.terminateBlockedProcess(process);
     }
 
     public static void writeFile(String fileName, String content){
         UserModeProcess process = scheduler.getRunningProcess();
         scheduler.blockRunningProcess();
         Thread thread = new Thread(() -> {
-            synchronized(fileSync){
-                File file = new File(fileName);
-                try{
-                    BufferedWriter br = new BufferedWriter(new FileWriter(file));
-                    try {
-                        br.write(content);
-                    } finally {
-                        br.close();
-                    }
-                }catch(IOException e) {
-                    DisplayWindow.displayProcessErrorMessage(process, "writeFile system call failed: " + e.getMessage());
-                    scheduler.terminateBlockedProcess(process);
-                } 
-            }
+            File file = new File(fileName);
+            try{
+                BufferedWriter br = new BufferedWriter(new FileWriter(file));
+                try {
+                    br.write(content);
+                } finally {
+                    br.close();
+                }
+            }catch(IOException e) {
+                DisplayWindow.displayProcessErrorMessage(process, "writeFile system call failed: " + e.getMessage());
+                terminateBlockedProcess(process);
+            } 
         });
         thread.start();
+    }
+
+    private static Mutex getMutex(String name){
+        if(!mutexes.contains(name)){
+            mutexes.put(name, new Mutex());
+        }
+        return mutexes.get(name);
+    }
+
+    public static void semWait(String name){
+        Mutex mutex = getMutex(name);
+        Boolean result = mutex.wait(scheduler.getRunningProcess());
+        if(!result){
+            scheduler.blockRunningProcess();
+        }
+    }
+
+    public static void semSignal(String name) throws SimulatorRuntimeException{
+        Mutex mutex = getMutex(name);
+        UserModeProcess process = mutex.signal(scheduler.getRunningProcess());
+        if(process != null){
+            scheduler.wakeUpProcess(process);
+        }
+    }
+
+    public static void releaseOwnedResources(UserModeProcess process){
+        for(Mutex m : mutexes.values()){
+            if(process == m.getOwner()){
+                UserModeProcess processToWakeUp = m.release();
+                if(processToWakeUp != null){
+                    scheduler.wakeUpProcess(processToWakeUp);
+                }
+            }
+        }
     }
 }
