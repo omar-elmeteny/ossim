@@ -16,9 +16,12 @@ import ossim.exceptions.SimulatorSyntaxException;
 public class OperatingSystem {
 
     static final private Scheduler scheduler = new Scheduler();
+    // attribute to assign a unique ID to the new process(incremented every time a process is created)
     static private int nextProcessID = 1;
     static private int currentTime = 0;
+    // hashtable to lookup programs by arrival time(arrival time is the search key)
     static final private Hashtable<Integer, ArrayList<String>> arrivingPrograms = new Hashtable<>();
+    // hashtable to lookup resources by name(resource name is the search key)
     static final private Hashtable<String,Mutex> mutexes = new Hashtable<>();
 
     private OperatingSystem() {
@@ -29,12 +32,14 @@ public class OperatingSystem {
         return scheduler;
     }
 
+    // parses the program text file and creates a new process and tells the scheduler to add it to the ready queue
     private static UserModeProcess launchProgram(String programPath) throws SimulatorSyntaxException, IOException {
         UserModeProcess process = new UserModeProcess(nextProcessID++, programPath);
         scheduler.addNewProcess(process);
         return process;
     }
 
+    // schedule the next ready process to run and executes the next instruction
     private static void runCycle() {
         UserModeProcess process = scheduler.schedule();
         if (process != null) {
@@ -57,11 +62,13 @@ public class OperatingSystem {
         }
     }
 
+    // when a process finishes normally or due to an error, signals all the resources it owns and moves it to the fiished queue
     private static void finishRunningProcess() {
-        releaseOwnedResources(scheduler.getRunningProcess());
+        signalOwnedResources(scheduler.getRunningProcess());
         scheduler.finishRunningProcess();
     }
 
+    // add a program to launched at the specified time
     public static void addArrivingProgram(int time, String programPath) {
         ArrayList<String> list = arrivingPrograms.get(time);
         if (list == null) {
@@ -71,6 +78,7 @@ public class OperatingSystem {
         list.add(programPath);
     }
 
+    // keeps running the programs until there are no programs to run
     public static void run() {
         while (scheduler.hasRunningPrograms() || !arrivingPrograms.isEmpty()) {
             launchArrivingPrograms();
@@ -79,6 +87,7 @@ public class OperatingSystem {
         }
     }
 
+    // launch all programs that should start at the current time
     private static void launchArrivingPrograms() {
         ArrayList<String> programs = arrivingPrograms.remove(currentTime);
         if (programs == null)
@@ -96,10 +105,13 @@ public class OperatingSystem {
 
     public static void input(String variableName) {
         UserModeProcess process = scheduler.getRunningProcess();
+        // because this is an IO Operation, the process is blocked
         scheduler.blockRunningProcess();
+        // run the IO Operation in a seperate thread to allow other processes to continue execution
         Thread thread = new Thread(() -> {
             String text = DisplayWindow.askForInput(process);
             process.writeVariable(variableName, text);
+            // When the IO Operation is completed, wakeup the process that started the operation by adding it to the ready queue
             scheduler.wakeUpProcess(process);
         });
         thread.start();
@@ -107,9 +119,12 @@ public class OperatingSystem {
 
     public static void print(String text){
         UserModeProcess process = scheduler.getRunningProcess();
+        // because this is an IO Operation, the process is blocked
         scheduler.blockRunningProcess();
+        // run the IO Operation in a seperate thread to allow other processes to continue execution
         Thread thread = new Thread(() -> {
             DisplayWindow.printProcessOutput(process, text);
+            // When the IO Operation is completed, wakeup the process that started the operation by adding it to the ready queue
             scheduler.wakeUpProcess(process);
         });
         thread.start();
@@ -117,7 +132,9 @@ public class OperatingSystem {
 
     public static void readFile(String fileName, String outputVariableName){
         UserModeProcess process = scheduler.getRunningProcess();
+        // because this is an IO Operation, the process is blocked
         scheduler.blockRunningProcess();
+        // run the IO Operation in a seperate thread to allow other processes to continue execution
         Thread thread = new Thread(() -> {
             File file = new File(fileName);
             try{
@@ -126,12 +143,13 @@ public class OperatingSystem {
                     String st;
                     String result = "";
                     while ((st = br.readLine()) != null) {
-                        result += st;
+                        result += st + "\n";
                     }
                     process.writeVariable(outputVariableName, result);
                 } finally {
                     br.close();
                 }
+                // When the IO Operation is completed, wakeup the process that started the operation by adding it to the ready queue
                 scheduler.wakeUpProcess(process);
             }catch(IOException e) {
                 DisplayWindow.displayProcessErrorMessage(process, "readFile system call failed: " + e.getMessage());
@@ -141,14 +159,17 @@ public class OperatingSystem {
         thread.start();
     }
 
+    // called when the IO operation fails to terminate the process and signal owned mutexes
     private static void terminateBlockedProcess(UserModeProcess process) {
-        releaseOwnedResources(process);
+        signalOwnedResources(process);
         scheduler.terminateBlockedProcess(process);
     }
 
     public static void writeFile(String fileName, String content){
         UserModeProcess process = scheduler.getRunningProcess();
+        // because this is an IO Operation, the process is blocked
         scheduler.blockRunningProcess();
+        // run the IO Operation in a seperate thread to allow other processes to continue execution
         Thread thread = new Thread(() -> {
             File file = new File(fileName);
             try{
@@ -158,6 +179,7 @@ public class OperatingSystem {
                 } finally {
                     br.close();
                 }
+                // When the IO Operation is completed, wakeup the process that started the operation by adding it to the ready queue
                 scheduler.wakeUpProcess(process);
             }catch(IOException e) {
                 DisplayWindow.displayProcessErrorMessage(process, "writeFile system call failed: " + e.getMessage());
@@ -178,6 +200,7 @@ public class OperatingSystem {
         Mutex mutex = getMutex(name);
         Boolean result = mutex.wait(scheduler.getRunningProcess());
         if(!result){
+            // wait could not acquire the mutex, so the process is blocked
             scheduler.blockRunningProcess();
         }
     }
@@ -186,14 +209,21 @@ public class OperatingSystem {
         Mutex mutex = getMutex(name);
         UserModeProcess process = mutex.signal(scheduler.getRunningProcess());
         if(process != null){
+            // wakeup the new owner of the mutex
             scheduler.wakeUpProcess(process);
         }
     }
 
-    public static void releaseOwnedResources(UserModeProcess process){
+    // If the process finishes without calling semSignal, signal all the mutexes owned by the process
+    public static void signalOwnedResources(UserModeProcess process){
         for(Mutex m : mutexes.values()){
             if(process == m.getOwner()){
-                UserModeProcess processToWakeUp = m.release();
+                UserModeProcess processToWakeUp;
+                try {
+                    processToWakeUp = m.signal(process);
+                } catch (SimulatorRuntimeException e) {
+                    processToWakeUp = null;
+                }
                 if(processToWakeUp != null){
                     scheduler.wakeUpProcess(processToWakeUp);
                 }

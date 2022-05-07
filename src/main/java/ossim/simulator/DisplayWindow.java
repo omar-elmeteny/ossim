@@ -32,6 +32,7 @@ public class DisplayWindow extends JFrame{
         setTitle("OS Simulator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1500,800);
+        // https://stackoverflow.com/questions/5133240/add-html-content-to-document-associated-with-jtextpane
         editorKit = new HTMLEditorKit();
         htmlDoc = new HTMLDocument();
         outputTextPane = new JTextPane();
@@ -45,19 +46,19 @@ public class DisplayWindow extends JFrame{
         outputTextScroller = new JScrollPane(outputTextPane);
         outputTextScroller.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         outputTextScroller.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        outputTextScroller.setOpaque(false);
-        outputTextScroller.getViewport().setOpaque(false);
         add(outputTextScroller);
         setVisible(true);
+        // whenever we add text to the outputTextPane and the size changes, we scroll to the end 
         outputTextPane.addComponentListener(new ComponentAdapter(){
             @Override
             public void componentResized(ComponentEvent e) {
                 JScrollBar vertical = outputTextScroller.getVerticalScrollBar();
-                vertical.setValue(vertical.getMaximum() + 100);
+                vertical.setValue(vertical.getMaximum());
             }
         });
     }
 
+    // singleton design pattern because we can only have one window
     public static synchronized DisplayWindow getMainWindow(){
         if(mainWindow == null){
             mainWindow = new DisplayWindow();
@@ -166,7 +167,7 @@ public class DisplayWindow extends JFrame{
         outputText.append("<span style='font-family: monospace;font-size: 18px;font-weigth: bold;color: ");
         outputText.append(color);
         outputText.append("'>");
-        outputText.append(text);
+        outputText.append(text.replaceAll("\n", "\n<br/>"));
         outputText.append("</span>");     
     }
 

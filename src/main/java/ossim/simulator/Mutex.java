@@ -7,9 +7,10 @@ import ossim.exceptions.SimulatorRuntimeException;
 
 public class Mutex {
 
+    // The current process owning the resource
     private UserModeProcess owner;
+    // Queue of the processes waiting to access the resource
     final private Queue<UserModeProcess> blockedProcesses;
-    private int counter = 0;
 
     public Mutex() {
         super();
@@ -29,17 +30,12 @@ public class Mutex {
     }
 
     public boolean wait(UserModeProcess process){
-        if(process == owner){
-            counter++;
-            return true;
-        }
-        else if(owner != null){
+        if(owner != null){
             blockedProcesses.add(process);
             return false;
         }
         else{
             owner = process;
-            counter = 1;
             return true;
         }
     }
@@ -48,29 +44,13 @@ public class Mutex {
         if(owner != process){
             throw new SimulatorRuntimeException("Process doesn't own the mutex");
         }
-        counter--;
-        if(counter == 0){
-            if(!blockedProcesses.isEmpty()){
-                owner = blockedProcesses.remove();
-                counter = 1;
-            }
-            else{
-                owner = null;
-            }
-            return owner;
+        if(!blockedProcesses.isEmpty()){
+            owner = blockedProcesses.remove();
         }
-        return null;
+        else{
+            owner = null;
+        }
+        return owner;
     }
 
-    public UserModeProcess release(){
-        if(owner != null){
-            counter = 0;
-            owner = null;
-            if(!blockedProcesses.isEmpty()){
-                owner = blockedProcesses.remove();
-                return owner;
-            }
-        }
-        return null;
-    }
 }
