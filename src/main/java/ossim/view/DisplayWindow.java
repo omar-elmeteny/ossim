@@ -1,4 +1,4 @@
-package ossim.simulator;
+package ossim.view;
 
 import java.awt.Color;
 import java.io.IOException;
@@ -15,6 +15,9 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 import ossim.instructions.Instruction;
+import ossim.simulator.ProcessState;
+import ossim.simulator.Scheduler;
+import ossim.simulator.UserModeProcess;
 
 // Displays every scheduling event and process output and executing instruction
 public class DisplayWindow extends JFrame{

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import ossim.view.DisplayWindow;
+
 public class Scheduler {
     
     // Represents the number of instructions in the fixed time slice

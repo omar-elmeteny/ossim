@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 import ossim.instructions.Instruction;
+import ossim.view.DisplayWindow;
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.exceptions.SimulatorSyntaxException;
 
