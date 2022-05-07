@@ -52,6 +52,7 @@ public class Mutex {
         if(counter == 0){
             if(!blockedProcesses.isEmpty()){
                 owner = blockedProcesses.remove();
+                counter = 1;
             }
             else{
                 owner = null;

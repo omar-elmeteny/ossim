@@ -132,6 +132,7 @@ public class OperatingSystem {
                 } finally {
                     br.close();
                 }
+                scheduler.wakeUpProcess(process);
             }catch(IOException e) {
                 DisplayWindow.displayProcessErrorMessage(process, "readFile system call failed: " + e.getMessage());
                 terminateBlockedProcess(process);
@@ -157,6 +158,7 @@ public class OperatingSystem {
                 } finally {
                     br.close();
                 }
+                scheduler.wakeUpProcess(process);
             }catch(IOException e) {
                 DisplayWindow.displayProcessErrorMessage(process, "writeFile system call failed: " + e.getMessage());
                 terminateBlockedProcess(process);
@@ -166,7 +168,7 @@ public class OperatingSystem {
     }
 
     private static Mutex getMutex(String name){
-        if(!mutexes.contains(name)){
+        if(!mutexes.containsKey(name)){
             mutexes.put(name, new Mutex());
         }
         return mutexes.get(name);
