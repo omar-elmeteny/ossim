@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-import ossim.commands.Command;
+import ossim.instructions.Instruction;
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.exceptions.SimulatorSyntaxException;
 
@@ -13,7 +13,7 @@ public class UserModeProcess {
     // assigned by the OperatingSystem class
     final private int processID;
     private int programCounter = 0;
-    final private ArrayList<Command> commands;
+    final private ArrayList<Instruction> instructions;
     private ProcessState state;
     // The hashtable is used to store the program variables and the variable name is the search key 
     private Hashtable<String, String> variables; 
@@ -23,7 +23,7 @@ public class UserModeProcess {
         super();
         this.processID = processID;
         this.programPath = programPath;
-        commands = Parser.parseFile(programPath);
+        instructions = Parser.parseFile(programPath);
         state = ProcessState.NEW;
         variables = new Hashtable<>();
         DisplayWindow.printProcess(this);
@@ -43,8 +43,8 @@ public class UserModeProcess {
         DisplayWindow.printProcessState(this, oldProcessState);
     }
 
-    public ArrayList<Command> getCommands() {
-        return commands;
+    public ArrayList<Instruction> getInstructions() {
+        return instructions;
     }
 
     public int getProgramCounter() {
@@ -71,18 +71,18 @@ public class UserModeProcess {
         return variables.get(variableName);
     }
 
-    // This is called by the interpreter(OperatingSystem class) to get the next command to be executed
+    // This is called by the interpreter(OperatingSystem class) to get the next instruction to be executed
     // This also increments the program counter
-    public Command getNextCommand(){
-        if(programCounter >= commands.size()){
+    public Instruction getNextInstruction(){
+        if(programCounter >= instructions.size()){
             return null;
         }
-        return commands.get(programCounter++);
+        return instructions.get(programCounter++);
     }
 
-    // Checks whether commands are finished or not
+    // Checks whether instructions are finished or not
     // When finished the OperatingSystem class will terminate the process
-    public boolean hasCommands(){
-        return programCounter < commands.size(); 
+    public boolean hasInstructions(){
+        return programCounter < instructions.size(); 
     }
 }

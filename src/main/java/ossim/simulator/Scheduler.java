@@ -6,10 +6,10 @@ import java.util.Queue;
 
 public class Scheduler {
     
-    // Represents the number of commands in the fixed time slice
-    private static final int commandsPerSlice = 2;
-    // Represents the number of commands currently executed in the time slice
-    private int commandsInCurrentSlice = 0;
+    // Represents the number of instructions in the fixed time slice
+    private static final int instructionsPerSlice = 2;
+    // Represents the number of instructions currently executed in the time slice
+    private int instructionsInCurrentSlice = 0;
     final private Queue<UserModeProcess> readyQueue;
     final private ArrayList<UserModeProcess> blockedProcesses;
     final private ArrayList<UserModeProcess> finishedProcesses;
@@ -39,7 +39,7 @@ public class Scheduler {
     }
 
     public static int getCyclesperslot() {
-        return commandsPerSlice;
+        return instructionsPerSlice;
     }
 
     // OS ready to take on an additional process
@@ -85,12 +85,12 @@ public class Scheduler {
     public synchronized UserModeProcess schedule(){
         // Determine whether to preempt the current running process or keep it running 
         if(runningProcess != null){
-            commandsInCurrentSlice++;
-            if(commandsInCurrentSlice >= commandsPerSlice){
-                // The cuurent time slice reached its maximum commands
+            instructionsInCurrentSlice++;
+            if(instructionsInCurrentSlice >= instructionsPerSlice){
+                // The cuurent time slice reached its maximum instructions
                 if(readyQueue.isEmpty()){
                     // The current running process is allowed to run another time slice because there are no processes in the ready queue
-                    commandsInCurrentSlice = 0;
+                    instructionsInCurrentSlice = 0;
                     return runningProcess;
                 }
                 preemptRunningProcess();
@@ -105,7 +105,7 @@ public class Scheduler {
         if(!readyQueue.isEmpty()){
             // Choosing the next ready process
             runningProcess = readyQueue.remove();
-            commandsInCurrentSlice = 0;
+            instructionsInCurrentSlice = 0;
             runningProcess.setState(ProcessState.RUNNING);
             DisplayWindow.printQueues(this);
         }    

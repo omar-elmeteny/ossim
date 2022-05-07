@@ -1,9 +1,9 @@
-package ossim.commands;
+package ossim.instructions;
 
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.simulator.UserModeProcess;
 
-public class Jump implements Command{
+public class Jump implements Instruction{
 
     private int positionOffset;
     

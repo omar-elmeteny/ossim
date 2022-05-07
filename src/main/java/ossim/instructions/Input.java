@@ -1,11 +1,11 @@
-package ossim.commands;
+package ossim.instructions;
 
 
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.simulator.OperatingSystem;
 import ossim.simulator.UserModeProcess;
 
-public class Input implements Command{
+public class Input implements Instruction{
 
     private String variableName;
     

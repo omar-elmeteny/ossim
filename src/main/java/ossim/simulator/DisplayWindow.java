@@ -14,8 +14,9 @@ import javax.swing.text.html.HTMLEditorKit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
-import ossim.commands.Command;
+import ossim.instructions.Instruction;
 
+// Displays every scheduling event and process output and executing instruction
 public class DisplayWindow extends JFrame{
 
     private static String blue = "#21a1f1";
@@ -64,11 +65,11 @@ public class DisplayWindow extends JFrame{
         return mainWindow;
     }
 
-    public static synchronized void printExecutingInstruction(UserModeProcess process, Command cmd){
+    public static synchronized void printExecutingInstruction(UserModeProcess process, Instruction instruction){
         addText("PID: ", blue);
         addText(process.getProcessID() + " ,", "white");
-        addText(" CMD: ", blue);
-        addText(cmd.toString(), "white");
+        addText(" INS: ", blue);
+        addText(instruction.toString(), "white");
         addNewLine();
     }
 

@@ -1,9 +1,9 @@
-package ossim.commands;
+package ossim.instructions;
 
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.simulator.UserModeProcess;
 
-public class Assign implements Command{
+public class Assign implements Instruction{
     
     private String toVariableName;
     private String fromVariableName;

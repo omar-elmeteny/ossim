@@ -1,9 +1,9 @@
-package ossim.commands;
+package ossim.instructions;
 
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.simulator.UserModeProcess;
 
-public class Increment implements Command{
+public class Increment implements Instruction{
     
     private String variableName;
 

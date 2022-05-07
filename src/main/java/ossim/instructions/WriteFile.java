@@ -1,10 +1,10 @@
-package ossim.commands;
+package ossim.instructions;
 
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.simulator.OperatingSystem;
 import ossim.simulator.UserModeProcess;
 
-public class WriteFile implements Command{
+public class WriteFile implements Instruction{
     
     private String fileNameVariable;
     private String dataVariable;

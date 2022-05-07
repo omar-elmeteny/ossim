@@ -1,9 +1,9 @@
-package ossim.commands;
+package ossim.instructions;
 
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.simulator.UserModeProcess;
 
-public class JumpIfGreaterThan implements Command{
+public class JumpIfGreaterThan implements Instruction{
     
     private String leftVariableName;
     private String rightVariableName;

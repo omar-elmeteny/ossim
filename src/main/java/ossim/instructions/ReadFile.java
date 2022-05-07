@@ -1,10 +1,10 @@
-package ossim.commands;
+package ossim.instructions;
 
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.simulator.OperatingSystem;
 import ossim.simulator.UserModeProcess;
 
-public class ReadFile implements Command{
+public class ReadFile implements Instruction{
     
     private String fileNameVariableName;
     private String outputVariableName;

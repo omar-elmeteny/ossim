@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-import ossim.commands.Command;
+import ossim.instructions.Instruction;
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.exceptions.SimulatorSyntaxException;
 
@@ -38,20 +38,20 @@ public class OperatingSystem {
     private static void runCycle() {
         UserModeProcess process = scheduler.schedule();
         if (process != null) {
-            Command cmd = process.getNextCommand();
-            if (cmd == null) {
+            Instruction instruction = process.getNextInstruction();
+            if (instruction == null) {
                 finishRunningProcess();
                 return;
             }
-            DisplayWindow.printExecutingInstruction(process, cmd);
+            DisplayWindow.printExecutingInstruction(process, instruction);
             try {
-                cmd.execute(process);
+                instruction.execute(process);
             } catch (SimulatorRuntimeException e) {
                 DisplayWindow.displayProcessErrorMessage(process, e.getMessage());
                 finishRunningProcess();
                 return;
             }
-            if (!process.hasCommands()) {
+            if (!process.hasInstructions()) {
                 finishRunningProcess();
             }
         }

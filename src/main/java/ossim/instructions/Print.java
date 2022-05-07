@@ -1,25 +1,26 @@
-package ossim.commands;
+package ossim.instructions;
 
 import ossim.exceptions.SimulatorRuntimeException;
 import ossim.simulator.OperatingSystem;
 import ossim.simulator.UserModeProcess;
 
-public class SemSignal implements Command{
-    
-    private String resource;
+public class Print implements Instruction{
 
-    public SemSignal(String resource) {
+    private String variableName;
+
+    public Print(String variableName) {
         super();
-        this.resource = resource;
+        this.variableName = variableName;
     }
 
     @Override
     public void execute(UserModeProcess process) throws SimulatorRuntimeException {
-        OperatingSystem.semSignal(resource);
+        OperatingSystem.print(process.readVariable(variableName));
     }
 
     @Override
     public String toString() {
-        return "semSignal " + resource;
+        return "print " + variableName;
     }
+    
 }
