@@ -73,7 +73,7 @@ public class DisplayWindow extends JFrame{
     }
 
     public static String askForInput(UserModeProcess process){
-        String text = JOptionPane.showInputDialog("Enter input for PID " + process.getProcessID() + ": ");
+        String text = JOptionPane.showInputDialog(getMainWindow(),"Enter input for PID " + process.getProcessID() + ": ");
         if(text == null)
             return "";
         return text;
