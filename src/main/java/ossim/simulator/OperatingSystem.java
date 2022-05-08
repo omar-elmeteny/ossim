@@ -19,9 +19,9 @@ public class OperatingSystem {
     static final private Scheduler scheduler = new Scheduler();
     // attribute to assign a unique ID to the new process(incremented every time a process is created)
     static private int nextProcessID = 1;
-    static private int currentTime = 0;
+    static private long currentTime = 0L;
     // hashtable to lookup programs by arrival time(arrival time is the search key)
-    static final private Hashtable<Integer, ArrayList<String>> arrivingPrograms = new Hashtable<>();
+    static final private Hashtable<Long, ArrayList<String>> arrivingPrograms = new Hashtable<>();
     // hashtable to lookup resources by name(resource name is the search key)
     static final private Hashtable<String,Mutex> mutexes = new Hashtable<>();
 
@@ -70,7 +70,7 @@ public class OperatingSystem {
     }
 
     // add a program to launched at the specified time
-    public static void addArrivingProgram(int time, String programPath) {
+    public static void addArrivingProgram(long time, String programPath) {
         ArrayList<String> list = arrivingPrograms.get(time);
         if (list == null) {
             list = new ArrayList<>();
