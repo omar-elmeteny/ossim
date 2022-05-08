@@ -77,6 +77,13 @@ public class DisplayWindow extends JFrame{
         addNewLine();
     }
 
+    public static synchronized void printIOTime(UserModeProcess process, String ioOperation, long startTime, long endTime){
+        addText("PID: ", blue);
+        addText(process.getProcessID() + " ", "white");
+        addText(ioOperation + " Operation took " + (endTime-startTime) + " cycles", "yellow");
+        addNewLine();
+    }
+
     public static String askForInput(UserModeProcess process){
         String text = JOptionPane.showInputDialog(getMainWindow(),"Enter input for PID " + process.getProcessID() + ": ");
         if(text == null)
