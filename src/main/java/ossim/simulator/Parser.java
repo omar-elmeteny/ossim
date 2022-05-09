@@ -11,19 +11,21 @@ import ossim.exceptions.SimulatorSyntaxException;
 
 public class Parser {
 
-    // special variable name used for the printFromTo instruction as the loop counter
+    // special variable name used for the printFromTo instruction as the loop
+    // counter
     private final static String counterVariableName = "counter";
 
-    // parsing every line in the program into instructions to be interpreted by the OperatingSystem class 
-    public static ArrayList<Instruction> parseFile(String pathname) throws IOException, SimulatorSyntaxException{
+    // parsing every line in the program into instructions to be interpreted by the
+    // OperatingSystem class
+    public static ArrayList<Instruction> parseFile(String pathname) throws IOException, SimulatorSyntaxException {
         ArrayList<String> lines = readFile(pathname);
         ArrayList<Instruction> instructions = new ArrayList<>();
-        for(String line : lines){
+        for (String line : lines) {
             instructions.addAll(parseLine(line));
         }
         return instructions;
     }
-    
+
     // reading the text file into an array of lines
     private static ArrayList<String> readFile(String pathname) throws IOException {
         File file = new File(pathname);
@@ -43,13 +45,13 @@ public class Parser {
     // using factory method design pattern to create instructions
     private static ArrayList<Instruction> parseLine(String line) throws SimulatorSyntaxException {
         int index = line.indexOf("#"); // handling code comments
-        if(index >= 0){
-            line = line.substring(0,index);
+        if (index >= 0) {
+            line = line.substring(0, index);
         }
         line = line.trim();
         String[] args = line.split("\\s+");
         ArrayList<Instruction> instructions = new ArrayList<Instruction>();
-        if(args.length == 0)
+        if (args.length == 0)
             return instructions;
         switch (args[0]) {
             case "semWait":
@@ -80,8 +82,11 @@ public class Parser {
                 if (args.length != 3) {
                     throw new SimulatorSyntaxException("Instruction " + args[0] + " has wrong number of arguments");
                 }
-                /* The printFromTo instruction is broken to five smaller instructions 
-                Reason: because the printFromTo method may print many number so it doesn't sense to run in a single cycle like other instructions*/
+                /*
+                 * The printFromTo instruction is broken to five smaller instructions
+                 * Reason: because the printFromTo method may print many number so it doesn't
+                 * sense to run in a single cycle like other instructions
+                 */
                 instructions.add(new Assign(counterVariableName, args[1]));
                 instructions.add(new JumpIfGreaterThan(counterVariableName, args[2], 3));
                 instructions.add(new Print(counterVariableName));

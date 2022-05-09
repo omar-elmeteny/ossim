@@ -1,0 +1,5 @@
+assign a 5
+assign b 10
+semWait userOutput
+printFromTo a b
+semSignal userOutput

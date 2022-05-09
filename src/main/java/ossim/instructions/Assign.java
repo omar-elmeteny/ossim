@@ -16,6 +16,14 @@ public class Assign implements Instruction{
 
     @Override
     public void execute(UserModeProcess process) throws SimulatorRuntimeException {
+        try{
+            int constant = Integer.parseInt(fromVariableName);
+            process.writeVariable(toVariableName, constant + "");
+            return;
+        }
+        catch(NumberFormatException e){
+
+        }
         String value = process.readVariable(fromVariableName);
         process.writeVariable(toVariableName, value);
     }
