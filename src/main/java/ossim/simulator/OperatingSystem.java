@@ -196,7 +196,13 @@ public class OperatingSystem {
         // continue execution
         Thread thread = new Thread(() -> {
             String text = DisplayWindow.askForInput(process);
-            process.writeVariable(variableName, text);
+            try {
+                process.writeVariable(variableName, text);
+            } catch (SimulatorRuntimeException e) {
+                DisplayWindow.displayProcessErrorMessage(process, "input system call failed: " + e.getMessage());
+                terminateBlockedProcess(process);
+                return;
+            }
             // When the IO Operation is completed, wakeup the process that started the
             // operation by adding it to the ready queue
             getScheduler().wakeUpProcess(process);
@@ -241,7 +247,13 @@ public class OperatingSystem {
                     while ((st = br.readLine()) != null) {
                         result += st + "\n";
                     }
-                    process.writeVariable(outputVariableName, result);
+                    try {
+                        process.writeVariable(outputVariableName, result);
+                    } catch (SimulatorRuntimeException e) {
+                        DisplayWindow.displayProcessErrorMessage(process, "readFile system call failed: " + e.getMessage());
+                        terminateBlockedProcess(process);
+                        return;
+                    }
                 } finally {
                     br.close();
                 }
@@ -344,7 +356,11 @@ public class OperatingSystem {
         int frameIndex = pageTable[page];
         Frame frame;
         if (frameIndex == -1) {
-            frame = Frame.load(process.getProcessID(), page);
+            try {
+                frame = Frame.load(process.getProcessID(), page);
+            } catch (SimulatorRuntimeException e) {
+                return null;
+            }
             frame = putFrameInPhysicalMemory(frame);
             pageTable[page] = frame.getFrameIndex();
         } else {
