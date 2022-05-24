@@ -25,6 +25,9 @@ public class OperatingSystem {
     static final private Hashtable<Long, ArrayList<String>> arrivingPrograms = new Hashtable<>();
     // hashtable to lookup resources by name(resource name is the search key)
     static final private Hashtable<String, Mutex> mutexes = new Hashtable<>();
+    static final private Object[] physicalMemory = new Object[40];
+    static final private int pageSize = 4;
+    static final private int logicalMemorySize = 32;
 
     private OperatingSystem() {
         super();
@@ -37,7 +40,7 @@ public class OperatingSystem {
     // parses the program text file and creates a new process and tells the
     // scheduler to add it to the ready queue
     private static UserModeProcess launchProgram(String programPath) throws SimulatorSyntaxException, IOException {
-        UserModeProcess process = new UserModeProcess(nextProcessID++, programPath);
+        UserModeProcess process = new UserModeProcess(programPath,new PCB(0));
         scheduler.addNewProcess(process);
         return process;
     }
@@ -255,5 +258,13 @@ public class OperatingSystem {
                 }
             }
         }
+    }
+
+    public static Object getObjectAtPhysicalAddress(int address){
+        return physicalMemory[address];
+    }
+
+    public static void setObjectAtPhysicalAddress(int address,Object value){
+        physicalMemory[address] = value;
     }
 }

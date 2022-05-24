@@ -11,21 +11,17 @@ import ossim.exceptions.SimulatorSyntaxException;
 
 // Represents a simulated process
 public class UserModeProcess {
-    // assigned by the OperatingSystem class
-    final private int processID;
-    private int programCounter = 0;
+    final private PCB pcb;
     final private ArrayList<Instruction> instructions;
-    private ProcessState state;
     // The hashtable is used to store the program variables and the variable name is the search key 
     private Hashtable<String, String> variables; 
     final private String programPath;
 
-    public UserModeProcess(int processID, String programPath) throws SimulatorSyntaxException, IOException {
+    public UserModeProcess(String programPath, PCB pcb) throws SimulatorSyntaxException, IOException {
         super();
-        this.processID = processID;
+        this.pcb = pcb;
         this.programPath = programPath;
         instructions = Parser.parseFile(programPath);
-        state = ProcessState.NEW;
         variables = new Hashtable<>();
         DisplayWindow.printProcess(this);
     }
@@ -35,12 +31,12 @@ public class UserModeProcess {
     }
 
     public ProcessState getState() {
-        return state;
+        return pcb.getProcessState();
     }
 
     public synchronized void setState(ProcessState state) {
-        ProcessState oldProcessState = this.state;
-        this.state = state;
+        ProcessState oldProcessState = pcb.getProcessState();
+        pcb.setProcessState(state);
         DisplayWindow.printProcessState(this, oldProcessState);
     }
 
@@ -49,15 +45,15 @@ public class UserModeProcess {
     }
 
     public int getProgramCounter() {
-        return programCounter;
+        return pcb.getProgramCounter();
     }
 
     public void setProgramCounter(int programCounter) {
-        this.programCounter = programCounter;
+        pcb.setProgramCounter(programCounter);
     }
 
     public int getProcessID() {
-        return processID;
+        return pcb.getProcessID();
     }
 
     // Writes the value in hashtable
@@ -75,15 +71,16 @@ public class UserModeProcess {
     // This is called by the interpreter(OperatingSystem class) to get the next instruction to be executed
     // This also increments the program counter
     public Instruction getNextInstruction(){
-        if(programCounter >= instructions.size()){
+        if(pcb.getProgramCounter() >= instructions.size()){
             return null;
         }
-        return instructions.get(programCounter++);
+        pcb.setProgramCounter(pcb.getProgramCounter()+1);
+        return instructions.get(pcb.getProgramCounter()-1);
     }
 
     // Checks whether instructions are finished or not
     // When finished the OperatingSystem class will terminate the process
     public boolean hasInstructions(){
-        return programCounter < instructions.size(); 
+        return pcb.getProgramCounter() < instructions.size(); 
     }
 }

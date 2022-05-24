@@ -32,4 +32,5 @@ public class Assign implements Instruction{
     public String toString() {
         return "assign " + toVariableName + " " + fromVariableName;
     }
+
 }

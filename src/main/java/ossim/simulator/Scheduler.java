@@ -9,7 +9,7 @@ import ossim.view.DisplayWindow;
 public class Scheduler {
     
     // Represents the number of instructions in the fixed time slice
-    private static final int instructionsPerSlice = 2;
+    private static final int instructionsPerSlice = 6;
     // Represents the number of instructions currently executed in the time slice
     private int instructionsInCurrentSlice = 0;
     final private Queue<UserModeProcess> readyQueue;
