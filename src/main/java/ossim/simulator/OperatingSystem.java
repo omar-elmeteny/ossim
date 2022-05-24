@@ -16,54 +16,129 @@ import ossim.exceptions.SimulatorSyntaxException;
 
 public class OperatingSystem {
 
-    static final private Scheduler scheduler = new Scheduler();
     // attribute to assign a unique ID to the new process(incremented every time a
     // process is created)
-    static private int nextProcessID = 1;
     static private long currentTime = 0L;
     // hashtable to lookup programs by arrival time(arrival time is the search key)
     static final private Hashtable<Long, ArrayList<String>> arrivingPrograms = new Hashtable<>();
     // hashtable to lookup resources by name(resource name is the search key)
-    static final private Hashtable<String, Mutex> mutexes = new Hashtable<>();
-    static final private Object[] physicalMemory = new Object[40];
-    static final private int pageSize = 4;
-    static final private int logicalMemorySize = 32;
+    static final public int pageSizeBits = 2;
+    static final private Frame[] physicalMemory = initializePhysicalMemory();
+    static final public int logicalMemorySizeBits = 5;
 
     private OperatingSystem() {
         super();
     }
 
     public static Scheduler getScheduler() {
-        return scheduler;
+        return (Scheduler) physicalMemory[0].getObjectAt(2);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Hashtable<String, Mutex> getMutexes() {
+        return (Hashtable<String, Mutex>) physicalMemory[0].getObjectAt(0);
+    }
+
+    public static int getNextProcessID() {
+        return (Integer) physicalMemory[0].getObjectAt(1);
+    }
+
+    public static void incrementNextProcessID() {
+        physicalMemory[0].setObjectAt(1, getNextProcessID() + 1);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Hashtable<Integer, UserModeProcess> getProcesses() {
+        return (Hashtable<Integer, UserModeProcess>) physicalMemory[0].getObjectAt(3);
+    }
+
+    private static Frame[] initializePhysicalMemory() {
+        Frame[] frames = new Frame[40 / (1 << pageSizeBits)];
+        frames[0] = new Frame(0);
+        frames[0].setObjectAt(0, new Hashtable<>()); // getMutexes()
+        frames[0].setObjectAt(1, 1); // nextProcessID
+        frames[0].setObjectAt(2, new Scheduler()); // getScheduler()
+        frames[0].setObjectAt(3, new Hashtable<>()); // processes
+        File swapFolder = new File("swap");
+        File[] files = swapFolder.listFiles();
+        for(File file : files){
+            file.delete();
+        }
+        return frames;
+    }
+
+    private static Frame findFreeFrame() throws SimulatorRuntimeException {
+        long min = Long.MAX_VALUE;
+        int minIndex = -1;
+        for (int i = 1; i < physicalMemory.length; i++) {
+            if (physicalMemory[i] == null) {
+                physicalMemory[i] = new Frame(i);
+                return physicalMemory[i];
+            }
+            if (physicalMemory[i].isFree()) {
+                return physicalMemory[i];
+            }
+            if (physicalMemory[i].getLastUse() < min && !physicalMemory[i].isPCBFrame()) {
+                min = physicalMemory[i].getLastUse();
+                minIndex = i;
+            }
+        }
+        if (minIndex == -1) {
+            throw new SimulatorRuntimeException("Out of Memory");
+        }
+        physicalMemory[minIndex].save();
+        UserModeProcess process = getProcesses().get(physicalMemory[minIndex].getProcessID());
+        int[] pageTable = process.getPcb().getPageTable();
+        pageTable[physicalMemory[minIndex].getPage()] = -1;
+        Frame frame = new Frame(minIndex);
+        physicalMemory[minIndex] = frame;
+        return frame;
     }
 
     // parses the program text file and creates a new process and tells the
-    // scheduler to add it to the ready queue
-    private static UserModeProcess launchProgram(String programPath) throws SimulatorSyntaxException, IOException {
-        UserModeProcess process = new UserModeProcess(programPath,new PCB(0));
-        scheduler.addNewProcess(process);
+    // getScheduler() to add it to the ready queue
+    private static UserModeProcess launchProgram(String programPath) throws SimulatorSyntaxException, IOException, SimulatorRuntimeException {
+        int page = (1 << (logicalMemorySizeBits - pageSizeBits)) - 1;
+        int processID = getNextProcessID();
+        incrementNextProcessID();
+        Frame frame = findFrame(page, processID);
+        UserModeProcess process = new UserModeProcess(programPath, new PCB(frame, processID));
+        getProcesses().put(processID, process);
+        ArrayList<Instruction> instructions = Parser.parseFile(programPath);
+        for(int i = 0;i < instructions.size();i++){
+            writeMemory(process, i, instructions.get(i));
+        }
+        writeMemory(process, (1 << logicalMemorySizeBits) - 1 - (1 << pageSizeBits), instructions.size());
+        getScheduler().addNewProcess(process);
         return process;
+    }
+
+    private static Frame findFrame(int page, int processID) throws SimulatorRuntimeException {
+        Frame frame = findFreeFrame();
+        frame.setProcessID(processID);
+        frame.setPage(page);
+        return frame;
     }
 
     // schedule the next ready process to run and executes the next instruction
     private static void runCycle() {
-        UserModeProcess process = scheduler.schedule();
+        UserModeProcess process = getScheduler().schedule();
         if (process != null) {
-            Instruction instruction = process.getNextInstruction();
-            if (instruction == null) {
-                finishRunningProcess();
-                return;
-            }
-            DisplayWindow.printExecutingInstruction(process, instruction);
             try {
+                Instruction instruction = process.getNextInstruction();
+                if (instruction == null) {
+                    finishRunningProcess();
+                    return;
+                }
+                DisplayWindow.printExecutingInstruction(process, instruction);
                 instruction.execute(process);
+                if (!process.hasInstructions()) {
+                    finishRunningProcess();
+                }
             } catch (SimulatorRuntimeException e) {
                 DisplayWindow.displayProcessErrorMessage(process, e.getMessage());
                 finishRunningProcess();
                 return;
-            }
-            if (!process.hasInstructions()) {
-                finishRunningProcess();
             }
         }
     }
@@ -71,8 +146,8 @@ public class OperatingSystem {
     // when a process finishes normally or due to an error, signals all the
     // resources it owns and moves it to the fiished queue
     private static void finishRunningProcess() {
-        signalOwnedResources(scheduler.getRunningProcess());
-        scheduler.finishRunningProcess();
+        signalOwnedResources(getScheduler().getRunningProcess());
+        getScheduler().finishRunningProcess();
     }
 
     // add a program to launched at the specified time
@@ -87,7 +162,7 @@ public class OperatingSystem {
 
     // keeps running the programs until there are no programs to run
     public static void run() {
-        while (scheduler.hasRunningPrograms() || !arrivingPrograms.isEmpty()) {
+        while (getScheduler().hasRunningPrograms() || !arrivingPrograms.isEmpty()) {
             launchArrivingPrograms();
             runCycle();
             currentTime++;
@@ -106,15 +181,17 @@ public class OperatingSystem {
                 DisplayWindow.printLaunchError(programPath, e.getMessage());
             } catch (IOException e) {
                 DisplayWindow.printLaunchError(programPath, e.getMessage());
+            } catch (SimulatorRuntimeException e) {
+                DisplayWindow.printLaunchError(programPath, e.getMessage());
             }
         }
     }
 
     public static void input(String variableName) {
-        UserModeProcess process = scheduler.getRunningProcess();
+        UserModeProcess process = getScheduler().getRunningProcess();
         long startTime = currentTime;
         // because this is an IO Operation, the process is blocked
-        scheduler.blockRunningProcess();
+        getScheduler().blockRunningProcess();
         // run the IO Operation in a seperate thread to allow other processes to
         // continue execution
         Thread thread = new Thread(() -> {
@@ -122,7 +199,7 @@ public class OperatingSystem {
             process.writeVariable(variableName, text);
             // When the IO Operation is completed, wakeup the process that started the
             // operation by adding it to the ready queue
-            scheduler.wakeUpProcess(process);
+            getScheduler().wakeUpProcess(process);
             long endTime = currentTime;
             DisplayWindow.printIOTime(process, "input", startTime, endTime);
         });
@@ -130,17 +207,17 @@ public class OperatingSystem {
     }
 
     public static void print(String text) {
-        UserModeProcess process = scheduler.getRunningProcess();
+        UserModeProcess process = getScheduler().getRunningProcess();
         long startTime = currentTime;
         // because this is an IO Operation, the process is blocked
-        scheduler.blockRunningProcess();
+        getScheduler().blockRunningProcess();
         // run the IO Operation in a seperate thread to allow other processes to
         // continue execution
         Thread thread = new Thread(() -> {
             DisplayWindow.printProcessOutput(process, text);
             // When the IO Operation is completed, wakeup the process that started the
             // operation by adding it to the ready queue
-            scheduler.wakeUpProcess(process);
+            getScheduler().wakeUpProcess(process);
             long endTime = currentTime;
             DisplayWindow.printIOTime(process, "print", startTime, endTime);
         });
@@ -148,10 +225,10 @@ public class OperatingSystem {
     }
 
     public static void readFile(String fileName, String outputVariableName) {
-        UserModeProcess process = scheduler.getRunningProcess();
+        UserModeProcess process = getScheduler().getRunningProcess();
         long startTime = currentTime;
         // because this is an IO Operation, the process is blocked
-        scheduler.blockRunningProcess();
+        getScheduler().blockRunningProcess();
         // run the IO Operation in a seperate thread to allow other processes to
         // continue execution
         Thread thread = new Thread(() -> {
@@ -170,7 +247,7 @@ public class OperatingSystem {
                 }
                 // When the IO Operation is completed, wakeup the process that started the
                 // operation by adding it to the ready queue
-                scheduler.wakeUpProcess(process);
+                getScheduler().wakeUpProcess(process);
                 long endTime = currentTime;
                 DisplayWindow.printIOTime(process, "readFile", startTime, endTime);
             } catch (IOException e) {
@@ -182,17 +259,17 @@ public class OperatingSystem {
     }
 
     // called when the IO operation fails to terminate the process and signal owned
-    // mutexes
+    // getMutexes()
     private static void terminateBlockedProcess(UserModeProcess process) {
         signalOwnedResources(process);
-        scheduler.terminateBlockedProcess(process);
+        getScheduler().terminateBlockedProcess(process);
     }
 
     public static void writeFile(String fileName, String content) {
-        UserModeProcess process = scheduler.getRunningProcess();
+        UserModeProcess process = getScheduler().getRunningProcess();
         long startTime = currentTime;
         // because this is an IO Operation, the process is blocked
-        scheduler.blockRunningProcess();
+        getScheduler().blockRunningProcess();
         // run the IO Operation in a seperate thread to allow other processes to
         // continue execution
         Thread thread = new Thread(() -> {
@@ -206,7 +283,7 @@ public class OperatingSystem {
                 }
                 // When the IO Operation is completed, wakeup the process that started the
                 // operation by adding it to the ready queue
-                scheduler.wakeUpProcess(process);
+                getScheduler().wakeUpProcess(process);
                 long endTime = currentTime;
                 DisplayWindow.printIOTime(process, "writeFile", startTime, endTime);
             } catch (IOException e) {
@@ -218,34 +295,35 @@ public class OperatingSystem {
     }
 
     private static Mutex getMutex(String name) {
-        if (!mutexes.containsKey(name)) {
-            mutexes.put(name, new Mutex());
+        if (!getMutexes().containsKey(name)) {
+            getMutexes().put(name, new Mutex());
         }
-        return mutexes.get(name);
+        return getMutexes().get(name);
     }
 
     public static void semWait(String name) {
         Mutex mutex = getMutex(name);
-        Boolean result = mutex.wait(scheduler.getRunningProcess());
+        Boolean result = mutex.wait(getScheduler().getRunningProcess());
         if (!result) {
             // wait could not acquire the mutex, so the process is blocked
-            scheduler.blockRunningProcess();
+            getScheduler().blockRunningProcess();
         }
     }
 
     public static void semSignal(String name) throws SimulatorRuntimeException {
         Mutex mutex = getMutex(name);
-        UserModeProcess process = mutex.signal(scheduler.getRunningProcess());
+        UserModeProcess process = mutex.signal(getScheduler().getRunningProcess());
         if (process != null) {
             // wakeup the new owner of the mutex
-            scheduler.wakeUpProcess(process);
+            getScheduler().wakeUpProcess(process);
         }
     }
 
-    // If the process finishes without calling semSignal, signal all the mutexes
+    // If the process finishes without calling semSignal, signal all the
+    // getMutexes()
     // owned by the process
     public static void signalOwnedResources(UserModeProcess process) {
-        for (Mutex m : mutexes.values()) {
+        for (Mutex m : getMutexes().values()) {
             if (process == m.getOwner()) {
                 UserModeProcess processToWakeUp;
                 try {
@@ -254,17 +332,55 @@ public class OperatingSystem {
                     processToWakeUp = null;
                 }
                 if (processToWakeUp != null) {
-                    scheduler.wakeUpProcess(processToWakeUp);
+                    getScheduler().wakeUpProcess(processToWakeUp);
                 }
             }
         }
     }
 
-    public static Object getObjectAtPhysicalAddress(int address){
-        return physicalMemory[address];
+    public static Object readMemory(UserModeProcess process, int logicalAddress) throws SimulatorRuntimeException {
+        int[] pageTable = process.getPcb().getPageTable();
+        int page = logicalAddress >>> pageSizeBits;
+        int frameIndex = pageTable[page];
+        Frame frame;
+        if (frameIndex == -1) {
+            frame = Frame.load(process.getProcessID(), page);
+            frame = putFrameInPhysicalMemory(frame);
+            pageTable[page] = frame.getFrameIndex();
+        } else {
+            frame = physicalMemory[frameIndex];
+        }
+        int offset = logicalAddress - (page << pageSizeBits);
+        return frame.getObjectAt(offset);
     }
 
-    public static void setObjectAtPhysicalAddress(int address,Object value){
-        physicalMemory[address] = value;
+    public static void writeMemory(UserModeProcess process, int logicalAddress, Object value)
+            throws SimulatorRuntimeException {
+        int[] pageTable = process.getPcb().getPageTable();
+        int page = logicalAddress >>> pageSizeBits;
+        int frameIndex = pageTable[page];
+        Frame frame;
+        if (frameIndex == -1) {
+            try {
+                frame = Frame.load(process.getProcessID(), page);
+                frame = putFrameInPhysicalMemory(frame);
+            } catch (SimulatorRuntimeException e) {
+                frame = findFrame(page, process.getProcessID());
+            }
+            pageTable[page] = frame.getFrameIndex();
+        } else {
+            frame = physicalMemory[frameIndex];
+        }
+        int offset = logicalAddress - (page << pageSizeBits);
+        frame.setObjectAt(offset, value);
     }
+
+    public static Frame putFrameInPhysicalMemory(Frame loadedFrame) throws SimulatorRuntimeException{
+        Frame frame = findFrame(loadedFrame.getPage(), loadedFrame.getProcessID());
+        for(int i = 0;i < (1 << pageSizeBits);i++){
+            frame.setObjectAt(i, loadedFrame.getObjectAt(i));
+        }
+        return frame;
+    }
+
 }

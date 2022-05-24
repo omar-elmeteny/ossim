@@ -2,35 +2,44 @@ package ossim.simulator;
 
 public class PCB {
     
-    private final int physicalAddress;
+    private Frame frame;
 
-    public PCB(int physicalAddress) {
+    public PCB(Frame frame, int processID) {
         super();
-        this.physicalAddress = physicalAddress;
+        this.frame = frame;
+        setProgramCounter(0);
+        setProcessState(ProcessState.NEW);
+        frame.setObjectAt(0, processID);
+        int[] pageTable = new int[1 << (OperatingSystem.logicalMemorySizeBits - OperatingSystem.pageSizeBits)];
+        for(int i = 0;i < pageTable.length;i++){
+            pageTable[i] = -1;
+        }
+        pageTable[pageTable.length - 1] = frame.getFrameIndex();
+        frame.setObjectAt(3, pageTable);
     }
 
     public int getProcessID(){
-        return (Integer) OperatingSystem.getObjectAtPhysicalAddress(physicalAddress);
+        return (Integer) frame.getObjectAt(0);
     }
 
     public int getProgramCounter(){
-        return (Integer) OperatingSystem.getObjectAtPhysicalAddress(physicalAddress+1);
+        return (Integer) frame.getObjectAt(1);
     }
 
     public void setProgramCounter(int programCounter){
-        OperatingSystem.setObjectAtPhysicalAddress(physicalAddress+1, programCounter);
+        frame.setObjectAt(1, programCounter);
     }
 
     public ProcessState getProcessState(){
-        return (ProcessState) OperatingSystem.getObjectAtPhysicalAddress(physicalAddress+2);
+        return (ProcessState) frame.getObjectAt(2);
     }
 
     public void setProcessState(ProcessState processState){
-        OperatingSystem.setObjectAtPhysicalAddress(physicalAddress+2, processState);
+        frame.setObjectAt(2, processState);
     }
 
     public int[] getPageTable(){
-        return (int[]) OperatingSystem.getObjectAtPhysicalAddress(physicalAddress+3);
+        return (int[]) frame.getObjectAt(3);
     }
 
 }

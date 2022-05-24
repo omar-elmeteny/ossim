@@ -1,27 +1,22 @@
 package ossim.simulator;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Hashtable;
 
 import ossim.instructions.Instruction;
 import ossim.view.DisplayWindow;
 import ossim.exceptions.SimulatorRuntimeException;
-import ossim.exceptions.SimulatorSyntaxException;
 
 // Represents a simulated process
 public class UserModeProcess {
     final private PCB pcb;
-    final private ArrayList<Instruction> instructions;
     // The hashtable is used to store the program variables and the variable name is the search key 
     private Hashtable<String, String> variables; 
     final private String programPath;
 
-    public UserModeProcess(String programPath, PCB pcb) throws SimulatorSyntaxException, IOException {
+    public UserModeProcess(String programPath, PCB pcb) {
         super();
         this.pcb = pcb;
         this.programPath = programPath;
-        instructions = Parser.parseFile(programPath);
         variables = new Hashtable<>();
         DisplayWindow.printProcess(this);
     }
@@ -40,10 +35,6 @@ public class UserModeProcess {
         DisplayWindow.printProcessState(this, oldProcessState);
     }
 
-    public ArrayList<Instruction> getInstructions() {
-        return instructions;
-    }
-
     public int getProgramCounter() {
         return pcb.getProgramCounter();
     }
@@ -54,6 +45,10 @@ public class UserModeProcess {
 
     public int getProcessID() {
         return pcb.getProcessID();
+    }
+
+    public int getProgramSize() throws SimulatorRuntimeException{
+        return (Integer) OperatingSystem.readMemory(this, (1 << OperatingSystem.logicalMemorySizeBits) - 1 - (1 << OperatingSystem.pageSizeBits));
     }
 
     // Writes the value in hashtable
@@ -70,17 +65,22 @@ public class UserModeProcess {
 
     // This is called by the interpreter(OperatingSystem class) to get the next instruction to be executed
     // This also increments the program counter
-    public Instruction getNextInstruction(){
-        if(pcb.getProgramCounter() >= instructions.size()){
+    public Instruction getNextInstruction() throws SimulatorRuntimeException{
+        if(pcb.getProgramCounter() >= getProgramSize()){
             return null;
         }
         pcb.setProgramCounter(pcb.getProgramCounter()+1);
-        return instructions.get(pcb.getProgramCounter()-1);
+        return (Instruction) OperatingSystem.readMemory(this, pcb.getProgramCounter()-1);
     }
 
     // Checks whether instructions are finished or not
     // When finished the OperatingSystem class will terminate the process
-    public boolean hasInstructions(){
-        return pcb.getProgramCounter() < instructions.size(); 
+    public boolean hasInstructions() throws SimulatorRuntimeException{
+        return pcb.getProgramCounter() < getProgramSize(); 
     }
+
+    public PCB getPcb() {
+        return pcb;
+    }
+
 }
