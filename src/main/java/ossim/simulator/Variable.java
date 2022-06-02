@@ -25,4 +25,9 @@ public class Variable implements Serializable{
         return variableName;
     }
 
+    @Override
+    public String toString() {
+        return variableName + ": " + variableValue;
+    }
+
 }

@@ -30,6 +30,10 @@ public class OperatingSystem {
         super();
     }
 
+    public static Frame[] getPhysicalmemory() {
+        return physicalMemory;
+    }
+
     public static Scheduler getScheduler() {
         return (Scheduler) physicalMemory[0].getObjectAt(2);
     }
@@ -60,7 +64,7 @@ public class OperatingSystem {
         frames[0].setObjectAt(2, new Scheduler()); // getScheduler()
         frames[0].setObjectAt(3, new Hashtable<>()); // processes
         File swapFolder = new File("swap");
-        File[] files = swapFolder.listFiles((f) ->f.getName().endsWith(".mem"));
+        File[] files = swapFolder.listFiles((f) -> f.getName().endsWith(".mem"));
         if (files != null) {
             for (File file : files) {
                 file.delete();
@@ -88,10 +92,12 @@ public class OperatingSystem {
         if (minIndex == -1) {
             throw new SimulatorRuntimeException("Out of Memory");
         }
-        physicalMemory[minIndex].save();
-        UserModeProcess process = getProcesses().get(physicalMemory[minIndex].getProcessID());
+        Frame swappedOutFrame = physicalMemory[minIndex];
+        swappedOutFrame.save();
+        DisplayWindow.addSwapOut(swappedOutFrame.getProcessID(), swappedOutFrame.getPage(), minIndex);
+        UserModeProcess process = getProcesses().get(swappedOutFrame.getProcessID());
         int[] pageTable = process.getPcb().getPageTable();
-        pageTable[physicalMemory[minIndex].getPage()] = -1;
+        pageTable[swappedOutFrame.getPage()] = -1;
         Frame frame = new Frame(minIndex);
         physicalMemory[minIndex] = frame;
         return frame;
@@ -112,6 +118,7 @@ public class OperatingSystem {
             writeMemory(process, i, instructions.get(i));
         }
         writeMemory(process, (1 << logicalMemorySizeBits) - 1 - (1 << pageSizeBits), instructions.size());
+        DisplayWindow.addMemoryTable(getPhysicalmemory());
         getScheduler().addNewProcess(process);
         return process;
     }
@@ -138,6 +145,7 @@ public class OperatingSystem {
                 if (!process.hasInstructions()) {
                     finishRunningProcess();
                 }
+                DisplayWindow.addMemoryTable(physicalMemory);
             } catch (SimulatorRuntimeException e) {
                 DisplayWindow.displayProcessErrorMessage(process, e.getMessage());
                 finishRunningProcess();
@@ -402,6 +410,7 @@ public class OperatingSystem {
         for(int i = 0;i < (1 << pageSizeBits);i++){
             frame.setObjectAt(i, loadedFrame.getObjectAt(i));
         }
+        DisplayWindow.addSwapIn(loadedFrame.getProcessID(), loadedFrame.getPage(), frame.getFrameIndex());
         return frame;
     }
 

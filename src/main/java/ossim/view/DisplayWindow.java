@@ -15,6 +15,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 import ossim.instructions.Instruction;
+import ossim.simulator.Frame;
+import ossim.simulator.OperatingSystem;
 import ossim.simulator.ProcessState;
 import ossim.simulator.Scheduler;
 import ossim.simulator.UserModeProcess;
@@ -59,6 +61,7 @@ public class DisplayWindow extends JFrame{
                 vertical.setValue(vertical.getMaximum());
             }
         });
+        addTableStyle();
     }
 
     // singleton design pattern because we can only have one window
@@ -172,18 +175,136 @@ public class DisplayWindow extends JFrame{
         addNewLine();
     }
 
+    private void addTableStyle(){
+        outputText.append("<html><head>");
+        outputText.append("<style>");
+        outputText.append("table{width:100%;border-spacing:0px;margin:20px;border-collapse:collapse;border:1px solid white;font-family:monospace;font-size:16px;}");
+        outputText.append("th{border:1px solid white;color:white;text-align:center;font-weight:bold;}");
+        outputText.append("td{border:1px solid white;color:white;padding:2px;}");
+        outputText.append("</style>");
+        outputText.append("</head><body>");
+
+        addHTML(outputText.toString());
+        outputText.delete(0, outputText.length());
+    }
+
+    public static synchronized void addMemoryTable(Frame[] physicalMemory){
+        outputText.append("<table>");
+        outputText.append("<tr>");
+        for(int i = 0;i < physicalMemory.length;i++){
+            outputText.append("<td>");
+            outputText.append("Frame");
+            outputText.append(i);
+            outputText.append("</td>");
+        }
+        outputText.append("</tr>");
+        outputText.append("<tr>");
+        for(int i = 0;i < physicalMemory.length;i++){
+            outputText.append("<td>");
+            String text = "";
+            if(i == 0){
+                text = "OS Data";
+            }
+            else if(physicalMemory[i] == null){
+                text = "Free";
+            }
+            else{
+                text = "Page: " + physicalMemory[i].getPage() + " PID: " + physicalMemory[i].getProcessID();
+            }
+            outputText.append(text);
+            outputText.append("</td>");
+        }
+        outputText.append("</tr>");
+        int pageSize = 4;
+        for(int j = 0;j < pageSize;j++){
+            outputText.append("<tr>");
+            for(int i = 0;i < physicalMemory.length;i++){
+                outputText.append("<td>");
+                String text = "";
+                if(physicalMemory[i] == null){
+                    text = "Free";
+                }
+                else if(i == 0){
+                    if(j == 0){
+                        text = "OS Mutexes";
+                    }
+                    else if(j == 1){
+                        text = "Next PID: " + physicalMemory[i].getObjectAt(j);
+                    }
+                    else if (j == 2){
+                        text = "OS Scheduler";
+                    }
+                    else{
+                        text = "Processes";
+                    }
+                }
+                else if(physicalMemory[i].getPage() == 7){
+                    if(j == 0){
+                        text = "PID: " + physicalMemory[i].getObjectAt(j);
+                    }
+                    else if(j == 1){
+                        text = "PC: " + physicalMemory[i].getObjectAt(j);
+                    }
+                    else if (j == 2){
+                        text = physicalMemory[i].getObjectAt(j).toString();
+                    }
+                    else{
+                        text = "Page Table";
+                    }
+                }
+                else{
+                    Object value = physicalMemory[i].getObjectAt(j);
+                    if(value != null){
+                        text = value.toString();
+                    }
+                }
+                outputText.append(text);
+                outputText.append("</td>");
+            }
+            outputText.append("</tr>");
+        }
+        outputText.append("</table>");
+        addNewLine();
+    } 
+
+    public static synchronized void addSwapOut(int processID, int page, int frame){
+        addText("Swap out ", "#005aff");
+        addText("PID: " , blue);
+        addText(processID + " , ", "white");
+        addText("Page: ", blue);
+        addText(page + " , ", "white");
+        addText("Page saved to file ", "#005aff");
+        addText(processID + "_" + page + ".mem ", "white");
+        addText("from frame: ", "#005aff");
+        addText(frame + ".", "white");
+        addNewLine();
+    }
+
+    public static synchronized void addSwapIn(int processID, int page, int frame){
+        addText("Swap in ", "orange");
+        addText("PID: " , blue);
+        addText(processID + " , ", "white");
+        addText("Page: ", blue);
+        addText(page + " , ", "white");
+        addText("Page loaded from file ", "orange");
+        addText(processID + "_" + page + ".mem ", "white");
+        addText("into frame: ", "orange");
+        addText(frame + ".", "white");
+        addNewLine();
+        addMemoryTable(OperatingSystem.getPhysicalmemory());
+    }
 
     private static synchronized void addText(String text, String color){
         outputText.append("<span style='font-family: monospace;font-size: 18px;font-weigth: bold;color: ");
         outputText.append(color);
         outputText.append("'>");
-        outputText.append(text.replaceAll("\n", "\n<br/>"));
+        outputText.append(text.replaceAll("\n", "\n<br>"));
         outputText.append("</span>");     
     }
 
     private static synchronized void addNewLine(){
         getMainWindow().addHTML(outputText.toString());
-        outputText.delete(0, outputText.length() - 1);
+        outputText.delete(0, outputText.length());
     }
 
     public void addHTML(String html){
