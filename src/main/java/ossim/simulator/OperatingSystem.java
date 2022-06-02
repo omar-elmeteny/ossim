@@ -60,9 +60,11 @@ public class OperatingSystem {
         frames[0].setObjectAt(2, new Scheduler()); // getScheduler()
         frames[0].setObjectAt(3, new Hashtable<>()); // processes
         File swapFolder = new File("swap");
-        File[] files = swapFolder.listFiles();
-        for(File file : files){
-            file.delete();
+        File[] files = swapFolder.listFiles((f) ->f.getName().endsWith(".mem"));
+        if (files != null) {
+            for (File file : files) {
+                file.delete();
+            }
         }
         return frames;
     }
@@ -97,7 +99,8 @@ public class OperatingSystem {
 
     // parses the program text file and creates a new process and tells the
     // getScheduler() to add it to the ready queue
-    private static UserModeProcess launchProgram(String programPath) throws SimulatorSyntaxException, IOException, SimulatorRuntimeException {
+    private static UserModeProcess launchProgram(String programPath)
+            throws SimulatorSyntaxException, IOException, SimulatorRuntimeException {
         int page = (1 << (logicalMemorySizeBits - pageSizeBits)) - 1;
         int processID = getNextProcessID();
         incrementNextProcessID();
@@ -105,7 +108,7 @@ public class OperatingSystem {
         UserModeProcess process = new UserModeProcess(programPath, new PCB(frame, processID));
         getProcesses().put(processID, process);
         ArrayList<Instruction> instructions = Parser.parseFile(programPath);
-        for(int i = 0;i < instructions.size();i++){
+        for (int i = 0; i < instructions.size(); i++) {
             writeMemory(process, i, instructions.get(i));
         }
         writeMemory(process, (1 << logicalMemorySizeBits) - 1 - (1 << pageSizeBits), instructions.size());
@@ -250,7 +253,8 @@ public class OperatingSystem {
                     try {
                         process.writeVariable(outputVariableName, result);
                     } catch (SimulatorRuntimeException e) {
-                        DisplayWindow.displayProcessErrorMessage(process, "readFile system call failed: " + e.getMessage());
+                        DisplayWindow.displayProcessErrorMessage(process,
+                                "readFile system call failed: " + e.getMessage());
                         terminateBlockedProcess(process);
                         return;
                     }
@@ -391,9 +395,9 @@ public class OperatingSystem {
         frame.setObjectAt(offset, value);
     }
 
-    public static Frame putFrameInPhysicalMemory(Frame loadedFrame) throws SimulatorRuntimeException{
+    public static Frame putFrameInPhysicalMemory(Frame loadedFrame) throws SimulatorRuntimeException {
         Frame frame = findFrame(loadedFrame.getPage(), loadedFrame.getProcessID());
-        for(int i = 0;i < (1 << pageSizeBits);i++){
+        for (int i = 0; i < (1 << pageSizeBits); i++) {
             frame.setObjectAt(i, loadedFrame.getObjectAt(i));
         }
         return frame;
