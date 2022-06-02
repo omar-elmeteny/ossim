@@ -104,7 +104,7 @@ public class OperatingSystem {
         int page = (1 << (logicalMemorySizeBits - pageSizeBits)) - 1;
         int processID = getNextProcessID();
         incrementNextProcessID();
-        Frame frame = findFrame(page, processID);
+        Frame frame = allocateFrame(page, processID);
         UserModeProcess process = new UserModeProcess(programPath, new PCB(frame, processID));
         getProcesses().put(processID, process);
         ArrayList<Instruction> instructions = Parser.parseFile(programPath);
@@ -116,7 +116,7 @@ public class OperatingSystem {
         return process;
     }
 
-    private static Frame findFrame(int page, int processID) throws SimulatorRuntimeException {
+    private static synchronized Frame allocateFrame(int page, int processID) throws SimulatorRuntimeException {
         Frame frame = findFreeFrame();
         frame.setProcessID(processID);
         frame.setPage(page);
@@ -354,7 +354,7 @@ public class OperatingSystem {
         }
     }
 
-    public static Object readMemory(UserModeProcess process, int logicalAddress) throws SimulatorRuntimeException {
+    public static synchronized Object readMemory(UserModeProcess process, int logicalAddress) throws SimulatorRuntimeException {
         int[] pageTable = process.getPcb().getPageTable();
         int page = logicalAddress >>> pageSizeBits;
         int frameIndex = pageTable[page];
@@ -371,10 +371,11 @@ public class OperatingSystem {
             frame = physicalMemory[frameIndex];
         }
         int offset = logicalAddress - (page << pageSizeBits);
+        frame.setLastUse(currentTime);
         return frame.getObjectAt(offset);
     }
 
-    public static void writeMemory(UserModeProcess process, int logicalAddress, Object value)
+    public static synchronized void writeMemory(UserModeProcess process, int logicalAddress, Object value)
             throws SimulatorRuntimeException {
         int[] pageTable = process.getPcb().getPageTable();
         int page = logicalAddress >>> pageSizeBits;
@@ -385,7 +386,7 @@ public class OperatingSystem {
                 frame = Frame.load(process.getProcessID(), page);
                 frame = putFrameInPhysicalMemory(frame);
             } catch (SimulatorRuntimeException e) {
-                frame = findFrame(page, process.getProcessID());
+                frame = allocateFrame(page, process.getProcessID());
             }
             pageTable[page] = frame.getFrameIndex();
         } else {
@@ -393,11 +394,12 @@ public class OperatingSystem {
         }
         int offset = logicalAddress - (page << pageSizeBits);
         frame.setObjectAt(offset, value);
+        frame.setLastUse(currentTime);
     }
 
-    public static Frame putFrameInPhysicalMemory(Frame loadedFrame) throws SimulatorRuntimeException {
-        Frame frame = findFrame(loadedFrame.getPage(), loadedFrame.getProcessID());
-        for (int i = 0; i < (1 << pageSizeBits); i++) {
+    public static Frame putFrameInPhysicalMemory(Frame loadedFrame) throws SimulatorRuntimeException{
+        Frame frame = allocateFrame(loadedFrame.getPage(), loadedFrame.getProcessID());
+        for(int i = 0;i < (1 << pageSizeBits);i++){
             frame.setObjectAt(i, loadedFrame.getObjectAt(i));
         }
         return frame;
